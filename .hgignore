@@ -1,0 +1,9 @@
+syntax: glob
+
+build/
+.vscode/
+
+src/CLI11.cpp
+src/json.cpp
+src/protobuf.cpp
+src/spdlog.cpp

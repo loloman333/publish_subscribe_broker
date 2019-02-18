@@ -1,0 +1,6 @@
+option('asio_include_dir', type : 'string', value : '/home/lorenz/.asio/include', description : 'the include dir of asio')
+option('spdlog_include_dir', type : 'string', value : '/home/lorenz/.spdlog/include/', description : 'the include dir of spdlog')
+#option('clipp_include_dir', type : 'string', value : '', description : 'the include dir of clipp')
+option('cli11_include_dir', type : 'string', value : '/home/lorenz/.CLI11/', description : 'the dir containing the dir of cli11')
+#option('fmt_include_dir', type : 'string', value : '', description : 'the include dir of fmt')
+#option('json_include_dir', type : 'string', value : '', description : 'the include dir of json')
