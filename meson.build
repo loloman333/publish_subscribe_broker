@@ -39,10 +39,15 @@ generated = gen.process('src/dummy.proto')
 inc_dir = include_directories('include')
 #src = ['src/main.cpp']
 #protobuf: 
-src = ['src/main.cpp', generated]
 
-executable('EXENAME',
-           sources : src,
+executable('Broker',
+           sources : ['src/Broker/main.cpp', generated],
+           include_directories : inc_dir,
+           dependencies : [thread_dep, protobuf_dep]
+          )
+
+executable('Client',
+           sources : ['src/Client/main.cpp', generated],
            include_directories : inc_dir,
            dependencies : [thread_dep, protobuf_dep]
           )
