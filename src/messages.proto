@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+message Response {
+
+  enum ResponseType{
+    OK     = 0;
+    ERROR  = 1;
+    UPDATE = 3;
+  }
+
+  ResponseType type  = 1;
+  string      topic = 2;
+
+  string      body  = 3;
+}
+
+message Request {
+
+  enum RequestType{
+    SUBSRIBE    = 0;
+    PUBLISH     = 1;
+    UNSUBSCRIBE = 2;
+  }
+
+  RequestType type  = 1;
+  string      topic = 2;
+}

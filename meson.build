@@ -31,7 +31,7 @@ gen = generator(protoc, \
   arguments : ['--proto_path=@CURRENT_SOURCE_DIR@/src', '--cpp_out=@BUILD_DIR@', '@PLAINNAME@'])
 
 # # change proto file accordingly
-generated = gen.process('src/dummy.proto')
+generated = gen.process('src/messages.proto')
 # # end protobuf
 
 # subdir('SUBDIR1')
