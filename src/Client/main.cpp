@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "messages.pb.h"
+
 // Asio
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -20,6 +22,14 @@ int main() {
     tcp::socket sock{ctx};                      // Socket
 
     asio::connect(sock, results);
+    
+    protobuf::Request request;                  // Protobuf Requet Object
 
-    asio::write(sock, asio::buffer("Hello World!\n"));
+    request.set_type(protobuf::Request::SUBSCRIBE);
+    request.set_topic("Hello World!");
+
+    string s;
+    request.SerializeToString(&s);
+
+    asio::write(sock, asio::buffer(s + "ENDOFMESSAGE"));
 }

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package protobuf;
+
 message Response {
 
   enum ResponseType{
@@ -9,19 +11,18 @@ message Response {
   }
 
   ResponseType type  = 1;
-  string      topic = 2;
-
-  string      body  = 3;
+  string       topic = 2;
 }
 
 message Request {
 
   enum RequestType{
-    SUBSRIBE    = 0;
+    SUBSCRIBE   = 0;
     PUBLISH     = 1;
     UNSUBSCRIBE = 2;
   }
 
   RequestType type  = 1;
   string      topic = 2;
+  bytes       body  = 3;
 }

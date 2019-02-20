@@ -1,10 +1,6 @@
 #include <iostream>
-#include <vector>
-#include <map>
-#include <thread>
 
-// CLI11
-// #include "CLI11.hpp"
+#include "messages.pb.h"
 
 // Asio
 #pragma GCC diagnostic push
@@ -18,8 +14,6 @@ using namespace asio::ip;
 
 int main() {
 
-    // Network Stuff
-
     asio::io_context ctx;                       // IO Context
     tcp::endpoint ep{tcp::v4(), 6666};          // Endpoint
     tcp::acceptor acceptor{ctx, ep};            // Acceptor
@@ -32,14 +26,21 @@ int main() {
 
         acceptor.accept(sock);
 
-        asio::streambuf buf;                    
-        asio::read_until(sock, buf, '\n');
+        protobuf::Request req;                  // Protobuf Request Object
+        
+        // Read Data from Socket & write into String 
+        asio::streambuf b;
+        asio::read_until(sock, b, "ENDOFMESSAGE");
+        asio::streambuf::const_buffers_type bufs = b.data();
+        string s{asio::buffers_begin(bufs),
+                 asio::buffers_begin(bufs) + b.size()}; 
+        s.erase(s.size()-12);
 
-        string message;
-        istream is{&buf};
-        getline(is, message);
+        req.ParseFromString(s);
 
-        cout << "Got Message: " << message << endl;
+        cout << "Got Request" << endl;
+        cout << "Type: "      << req.type() << endl;
+        cout << "Topic: "     << req.topic() << endl;
 
         sock.close();
     }

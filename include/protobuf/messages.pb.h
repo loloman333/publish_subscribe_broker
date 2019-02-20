@@ -46,18 +46,21 @@ struct TableStruct {
 };
 void AddDescriptors();
 }  // namespace protobuf_messages_2eproto
+namespace messages {
 class Request;
 class RequestDefaultTypeInternal;
 extern RequestDefaultTypeInternal _Request_default_instance_;
 class Response;
 class ResponseDefaultTypeInternal;
 extern ResponseDefaultTypeInternal _Response_default_instance_;
+}  // namespace messages
 namespace google {
 namespace protobuf {
-template<> ::Request* Arena::CreateMaybeMessage<::Request>(Arena*);
-template<> ::Response* Arena::CreateMaybeMessage<::Response>(Arena*);
+template<> ::messages::Request* Arena::CreateMaybeMessage<::messages::Request>(Arena*);
+template<> ::messages::Response* Arena::CreateMaybeMessage<::messages::Response>(Arena*);
 }  // namespace protobuf
 }  // namespace google
+namespace messages {
 
 enum Response_ResponseType {
   Response_ResponseType_OK = 0,
@@ -82,14 +85,14 @@ inline bool Response_ResponseType_Parse(
     Response_ResponseType_descriptor(), name, value);
 }
 enum Request_RequestType {
-  Request_RequestType_SUBSRIBE = 0,
+  Request_RequestType_SUBSCRIBE = 0,
   Request_RequestType_PUBLISH = 1,
   Request_RequestType_UNSUBSCRIBE = 2,
   Request_RequestType_Request_RequestType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   Request_RequestType_Request_RequestType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool Request_RequestType_IsValid(int value);
-const Request_RequestType Request_RequestType_RequestType_MIN = Request_RequestType_SUBSRIBE;
+const Request_RequestType Request_RequestType_RequestType_MIN = Request_RequestType_SUBSCRIBE;
 const Request_RequestType Request_RequestType_RequestType_MAX = Request_RequestType_UNSUBSCRIBE;
 const int Request_RequestType_RequestType_ARRAYSIZE = Request_RequestType_RequestType_MAX + 1;
 
@@ -105,7 +108,7 @@ inline bool Request_RequestType_Parse(
 }
 // ===================================================================
 
-class Response : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:Response) */ {
+class Response : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:messages.Response) */ {
  public:
   Response();
   virtual ~Response();
@@ -248,13 +251,13 @@ class Response : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_body();
   void set_allocated_body(::std::string* body);
 
-  // .Response.ResponseType type = 1;
+  // .messages.Response.ResponseType type = 1;
   void clear_type();
   static const int kTypeFieldNumber = 1;
-  ::Response_ResponseType type() const;
-  void set_type(::Response_ResponseType value);
+  ::messages::Response_ResponseType type() const;
+  void set_type(::messages::Response_ResponseType value);
 
-  // @@protoc_insertion_point(class_scope:Response)
+  // @@protoc_insertion_point(class_scope:messages.Response)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -266,7 +269,7 @@ class Response : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:Request) */ {
+class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:messages.Request) */ {
  public:
   Request();
   virtual ~Request();
@@ -352,8 +355,8 @@ class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   // nested types ----------------------------------------------------
 
   typedef Request_RequestType RequestType;
-  static const RequestType SUBSRIBE =
-    Request_RequestType_SUBSRIBE;
+  static const RequestType SUBSCRIBE =
+    Request_RequestType_SUBSCRIBE;
   static const RequestType PUBLISH =
     Request_RequestType_PUBLISH;
   static const RequestType UNSUBSCRIBE =
@@ -395,13 +398,13 @@ class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::std::string* release_topic();
   void set_allocated_topic(::std::string* topic);
 
-  // .Request.RequestType type = 1;
+  // .messages.Request.RequestType type = 1;
   void clear_type();
   static const int kTypeFieldNumber = 1;
-  ::Request_RequestType type() const;
-  void set_type(::Request_RequestType value);
+  ::messages::Request_RequestType type() const;
+  void set_type(::messages::Request_RequestType value);
 
-  // @@protoc_insertion_point(class_scope:Request)
+  // @@protoc_insertion_point(class_scope:messages.Request)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -421,18 +424,18 @@ class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 #endif  // __GNUC__
 // Response
 
-// .Response.ResponseType type = 1;
+// .messages.Response.ResponseType type = 1;
 inline void Response::clear_type() {
   type_ = 0;
 }
-inline ::Response_ResponseType Response::type() const {
-  // @@protoc_insertion_point(field_get:Response.type)
-  return static_cast< ::Response_ResponseType >(type_);
+inline ::messages::Response_ResponseType Response::type() const {
+  // @@protoc_insertion_point(field_get:messages.Response.type)
+  return static_cast< ::messages::Response_ResponseType >(type_);
 }
-inline void Response::set_type(::Response_ResponseType value) {
+inline void Response::set_type(::messages::Response_ResponseType value) {
   
   type_ = value;
-  // @@protoc_insertion_point(field_set:Response.type)
+  // @@protoc_insertion_point(field_set:messages.Response.type)
 }
 
 // string topic = 2;
@@ -440,41 +443,41 @@ inline void Response::clear_topic() {
   topic_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Response::topic() const {
-  // @@protoc_insertion_point(field_get:Response.topic)
+  // @@protoc_insertion_point(field_get:messages.Response.topic)
   return topic_.GetNoArena();
 }
 inline void Response::set_topic(const ::std::string& value) {
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:Response.topic)
+  // @@protoc_insertion_point(field_set:messages.Response.topic)
 }
 #if LANG_CXX11
 inline void Response::set_topic(::std::string&& value) {
   
   topic_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:Response.topic)
+  // @@protoc_insertion_point(field_set_rvalue:messages.Response.topic)
 }
 #endif
 inline void Response::set_topic(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:Response.topic)
+  // @@protoc_insertion_point(field_set_char:messages.Response.topic)
 }
 inline void Response::set_topic(const char* value, size_t size) {
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:Response.topic)
+  // @@protoc_insertion_point(field_set_pointer:messages.Response.topic)
 }
 inline ::std::string* Response::mutable_topic() {
   
-  // @@protoc_insertion_point(field_mutable:Response.topic)
+  // @@protoc_insertion_point(field_mutable:messages.Response.topic)
   return topic_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Response::release_topic() {
-  // @@protoc_insertion_point(field_release:Response.topic)
+  // @@protoc_insertion_point(field_release:messages.Response.topic)
   
   return topic_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -485,7 +488,7 @@ inline void Response::set_allocated_topic(::std::string* topic) {
     
   }
   topic_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), topic);
-  // @@protoc_insertion_point(field_set_allocated:Response.topic)
+  // @@protoc_insertion_point(field_set_allocated:messages.Response.topic)
 }
 
 // string body = 3;
@@ -493,41 +496,41 @@ inline void Response::clear_body() {
   body_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Response::body() const {
-  // @@protoc_insertion_point(field_get:Response.body)
+  // @@protoc_insertion_point(field_get:messages.Response.body)
   return body_.GetNoArena();
 }
 inline void Response::set_body(const ::std::string& value) {
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:Response.body)
+  // @@protoc_insertion_point(field_set:messages.Response.body)
 }
 #if LANG_CXX11
 inline void Response::set_body(::std::string&& value) {
   
   body_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:Response.body)
+  // @@protoc_insertion_point(field_set_rvalue:messages.Response.body)
 }
 #endif
 inline void Response::set_body(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:Response.body)
+  // @@protoc_insertion_point(field_set_char:messages.Response.body)
 }
 inline void Response::set_body(const char* value, size_t size) {
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:Response.body)
+  // @@protoc_insertion_point(field_set_pointer:messages.Response.body)
 }
 inline ::std::string* Response::mutable_body() {
   
-  // @@protoc_insertion_point(field_mutable:Response.body)
+  // @@protoc_insertion_point(field_mutable:messages.Response.body)
   return body_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Response::release_body() {
-  // @@protoc_insertion_point(field_release:Response.body)
+  // @@protoc_insertion_point(field_release:messages.Response.body)
   
   return body_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -538,25 +541,25 @@ inline void Response::set_allocated_body(::std::string* body) {
     
   }
   body_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), body);
-  // @@protoc_insertion_point(field_set_allocated:Response.body)
+  // @@protoc_insertion_point(field_set_allocated:messages.Response.body)
 }
 
 // -------------------------------------------------------------------
 
 // Request
 
-// .Request.RequestType type = 1;
+// .messages.Request.RequestType type = 1;
 inline void Request::clear_type() {
   type_ = 0;
 }
-inline ::Request_RequestType Request::type() const {
-  // @@protoc_insertion_point(field_get:Request.type)
-  return static_cast< ::Request_RequestType >(type_);
+inline ::messages::Request_RequestType Request::type() const {
+  // @@protoc_insertion_point(field_get:messages.Request.type)
+  return static_cast< ::messages::Request_RequestType >(type_);
 }
-inline void Request::set_type(::Request_RequestType value) {
+inline void Request::set_type(::messages::Request_RequestType value) {
   
   type_ = value;
-  // @@protoc_insertion_point(field_set:Request.type)
+  // @@protoc_insertion_point(field_set:messages.Request.type)
 }
 
 // string topic = 2;
@@ -564,41 +567,41 @@ inline void Request::clear_topic() {
   topic_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Request::topic() const {
-  // @@protoc_insertion_point(field_get:Request.topic)
+  // @@protoc_insertion_point(field_get:messages.Request.topic)
   return topic_.GetNoArena();
 }
 inline void Request::set_topic(const ::std::string& value) {
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:Request.topic)
+  // @@protoc_insertion_point(field_set:messages.Request.topic)
 }
 #if LANG_CXX11
 inline void Request::set_topic(::std::string&& value) {
   
   topic_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:Request.topic)
+  // @@protoc_insertion_point(field_set_rvalue:messages.Request.topic)
 }
 #endif
 inline void Request::set_topic(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:Request.topic)
+  // @@protoc_insertion_point(field_set_char:messages.Request.topic)
 }
 inline void Request::set_topic(const char* value, size_t size) {
   
   topic_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:Request.topic)
+  // @@protoc_insertion_point(field_set_pointer:messages.Request.topic)
 }
 inline ::std::string* Request::mutable_topic() {
   
-  // @@protoc_insertion_point(field_mutable:Request.topic)
+  // @@protoc_insertion_point(field_mutable:messages.Request.topic)
   return topic_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Request::release_topic() {
-  // @@protoc_insertion_point(field_release:Request.topic)
+  // @@protoc_insertion_point(field_release:messages.Request.topic)
   
   return topic_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -609,7 +612,7 @@ inline void Request::set_allocated_topic(::std::string* topic) {
     
   }
   topic_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), topic);
-  // @@protoc_insertion_point(field_set_allocated:Request.topic)
+  // @@protoc_insertion_point(field_set_allocated:messages.Request.topic)
 }
 
 #ifdef __GNUC__
@@ -620,19 +623,20 @@ inline void Request::set_allocated_topic(::std::string* topic) {
 
 // @@protoc_insertion_point(namespace_scope)
 
+}  // namespace messages
 
 namespace google {
 namespace protobuf {
 
-template <> struct is_proto_enum< ::Response_ResponseType> : ::std::true_type {};
+template <> struct is_proto_enum< ::messages::Response_ResponseType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Response_ResponseType>() {
-  return ::Response_ResponseType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::messages::Response_ResponseType>() {
+  return ::messages::Response_ResponseType_descriptor();
 }
-template <> struct is_proto_enum< ::Request_RequestType> : ::std::true_type {};
+template <> struct is_proto_enum< ::messages::Request_RequestType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Request_RequestType>() {
-  return ::Request_RequestType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::messages::Request_RequestType>() {
+  return ::messages::Request_RequestType_descriptor();
 }
 
 }  // namespace protobuf
