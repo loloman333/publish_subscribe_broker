@@ -12,6 +12,7 @@ message Response {
 
   ResponseType type  = 1;
   string       topic = 2;
+  bytes        body  = 3;
 }
 
 message Request {
