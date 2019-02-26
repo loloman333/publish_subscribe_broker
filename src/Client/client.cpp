@@ -11,12 +11,14 @@ void Client::sendRequest(protobuf::Request& request){
     request.SerializeToString(&s);
 
     asio::write(_socket, asio::buffer(s + "ENDOFMESSAGE"));
+
+    this_thread::sleep_for(chrono::milliseconds(1)); // ???
 }
 
 protobuf::Response Client::receiveResponse(){
     // Read Data from Socket & write it into String 
     asio::streambuf b;
-    asio::read_until(_socket, b, "ENDOFMESSAGE");     // Blocking !!!
+    asio::read_until(_socket, b, "ENDOFMESSAGE");  // Blocking !!!
     asio::streambuf::const_buffers_type bufs = b.data();
     string s{asio::buffers_begin(bufs),
              asio::buffers_begin(bufs) + b.size()}; 
@@ -35,20 +37,14 @@ void Client::handleResponses(){
             receiveResponse()
         };
 
-        cout << "Client: Received a Respond!" << endl;
-
         if (response.type() == protobuf::Response::OK){
-            cout << "Client: Broker responded with OK!" << endl;
-            cout << "Client: " + response.body() << endl;
+            cout << "Client: Broker responded with: OK " + response.body() << endl;
 
         } else if (response.type() == protobuf::Response::ERROR){
-            cout << "Client: Broker responded with ERROR!" << endl;
-            cout << "Client: " + response.body() << endl;
+            cout << "Client: Broker responded with: ERROR " + response.body() << endl;
 
         } else if (response.type() == protobuf::Response::UPDATE){
-
-            cout << "Client: Received following Update to Topic " + response.topic() + ":" << endl;
-            cout << response.body() << endl;
+            cout << "Client: Received Update to Topic " + response.topic() + ": " + response.body() << endl;
         }
     }
 }

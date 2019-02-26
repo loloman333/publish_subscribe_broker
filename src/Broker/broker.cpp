@@ -71,6 +71,8 @@ void Broker::sendResponse(
 void Broker::serveClient(shared_socket socket){
     while (true){
 
+        //this_thread::sleep_for(chrono::seconds(10));
+
         protobuf::Request request{ 
             receiveRequest(socket)
         };
@@ -85,6 +87,8 @@ void Broker::serveClient(shared_socket socket){
 
                 cout << "Broker: Received Request to add Client to Topic " + topic << endl;
 
+                unique_lock lck{_topics_locker};
+
                 if (_topics->count(topic) == 0){
                     _topics->emplace(
                         make_pair(topic, vector<shared_socket>())
@@ -92,6 +96,8 @@ void Broker::serveClient(shared_socket socket){
                 }
 
                 _topics->at(topic).push_back(socket);
+
+                lck.unlock();
 
                 cout << "Broker: Added Client to Topic " + topic << endl;
 
@@ -109,6 +115,8 @@ void Broker::serveClient(shared_socket socket){
 
                 bool removed = false;
 
+                unique_lock lck{_topics_locker};
+
                 if (! _topics->count(topic) == 0){
 
                     auto it = _topics->at(topic).begin();
@@ -121,6 +129,8 @@ void Broker::serveClient(shared_socket socket){
                         }
                     }
                 }
+
+                lck.unlock();
 
                 if (removed){   
                     cout << "Broker: Removed Client from Topic " + topic << endl;
@@ -148,6 +158,8 @@ void Broker::serveClient(shared_socket socket){
                 cout << "Broker: Received Request to publish the following Content to Topic " + topic << endl;
                 cout << request.body() << endl;
 
+                unique_lock lck{_topics_locker};
+
                 if (_topics->count(topic) == 0){
                     cout << "Broker: Nobody subscribed to Topic" + topic + ". Content will not be published." << endl;
 
@@ -168,6 +180,8 @@ void Broker::serveClient(shared_socket socket){
                         request.body()
                     );
                 }
+
+                lck.unlock();
 
                 cout << "Broker: Published the Content to Topic:" + topic << endl;
                 sendResponse(

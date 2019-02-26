@@ -33,7 +33,7 @@ public:
 private:
     short unsigned int _port;
     shared_socket_map  _topics; 
-    //mutex              _topics_locker;     
+    std::mutex         _topics_locker;     
 
     bool isValid(protobuf::Request&);
 
