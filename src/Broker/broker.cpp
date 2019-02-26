@@ -12,12 +12,16 @@ void Broker::start(){
     tcp::acceptor    acceptor{ctx, ep};                                 // Acceptor     
 
     acceptor.listen();  
+
+    cout << "Broker: Now listening on port " + to_string(_port) << endl;
     
     while (true){
 
         shared_socket sock{make_shared<tcp::socket>(ctx)};    // Socket
 
         acceptor.accept(*sock);  // Blocking !!!
+
+        cout << "Broker: A new Client connected" << endl;
 
         thread t{&Broker::serveClient, this, move(sock)};
         t.detach();    
@@ -46,7 +50,18 @@ protobuf::Request Broker::receiveRequest(shared_socket socket){
     return request;
 }
 
-void Broker::sendResponse(shared_socket socket, protobuf::Response& response){
+void Broker::sendResponse(
+    shared_socket socket, 
+    string topic, 
+    protobuf::Response_ResponseType type,
+    string content){
+
+    protobuf::Response response;
+
+    response.set_topic(topic);
+    response.set_type(type); 
+    response.set_body(content);    
+
     string s;
     response.SerializeToString(&s);
 
@@ -56,19 +71,19 @@ void Broker::sendResponse(shared_socket socket, protobuf::Response& response){
 void Broker::serveClient(shared_socket socket){
     while (true){
 
-        protobuf::Request request{
+        protobuf::Request request{ 
             receiveRequest(socket)
         };
-    
-        cout << "Broker: Received a Request!" << endl;
 
         if (isValid(ref(request))){
 
             int    type  = request.type();
             string topic = request.topic();
-            
+
             // SUBSCRIBE
             if (type == protobuf::Request::SUBSCRIBE) {
+
+                cout << "Broker: Received Request to add Client to Topic " + topic << endl;
 
                 if (_topics->count(topic) == 0){
                     _topics->emplace(
@@ -78,50 +93,110 @@ void Broker::serveClient(shared_socket socket){
 
                 _topics->at(topic).push_back(socket);
 
-                cout << "Broker: Added Socket to Topic" << endl;
+                cout << "Broker: Added Client to Topic " + topic << endl;
+
+                sendResponse(
+                    socket, 
+                    topic, 
+                    protobuf::Response::OK,
+                    "Successfully subscribed to Topic " + topic
+                );
             
             // UNSUBSCRIBE
             } else if (type == protobuf::Request::UNSUBSCRIBE) {
 
-                if (_topics->count(topic) == 0){
-                    break;
-                }
-                
-                auto it = _topics->at(topic).begin();
+                cout << "Broker: Received Request to remove Client from Topic " + topic << endl;
 
-                while (it != _topics->at(topic).end()){
+                bool removed = false;
 
-                    if (it->get() == socket.get()){
-                        it = _topics->at(topic).erase(it);
+                if (! _topics->count(topic) == 0){
+
+                    auto it = _topics->at(topic).begin();
+
+                    while (it != _topics->at(topic).end()){
+
+                        if (it->get() == socket.get()){
+                            it = _topics->at(topic).erase(it);
+                            removed = true;
+                        }
                     }
+                }
 
-                    cout << "Broker: Removed Socket from Topic" << endl;
+                if (removed){   
+                    cout << "Broker: Removed Client from Topic " + topic << endl;
+
+                    sendResponse(
+                        socket, 
+                        topic, 
+                        protobuf::Response::OK,
+                        "Successfully unsubscribed from Topic " + topic
+                    );
+                } else {
+                    cout << "Broker: Client wasn't subscribed to Topic " + topic << endl;
+
+                    sendResponse(
+                        socket, 
+                        topic, 
+                        protobuf::Response::OK,
+                        "No need to unsubscribe from Topic " + topic + ". You were not subscribed to it."
+                    );
                 }
             
             // PUBLISH
             } else if (type == protobuf::Request::PUBLISH) {
 
+                cout << "Broker: Received Request to publish the following Content to Topic " + topic << endl;
+                cout << request.body() << endl;
+
                 if (_topics->count(topic) == 0){
+                    cout << "Broker: Nobody subscribed to Topic" + topic + ". Content will not be published." << endl;
+
+                    sendResponse(
+                        socket, 
+                        topic, 
+                        protobuf::Response::OK,
+                        "Nobody was subscribed to Topic " + topic + ". Content was not published."
+                    );
                     break;
                 }
 
-                protobuf::Response response;
-                response.set_type(protobuf::Response::UPDATE);
-                response.set_topic(topic);
-                response.set_body(request.body());
-
                 for (shared_socket& sock : _topics->at(topic)){
-                    sendResponse(sock, response);
+                    sendResponse(
+                        sock, 
+                        topic, 
+                        protobuf::Response::UPDATE,
+                        request.body()
+                    );
                 }
 
-                cout << "Broker: Published Content for Topic!" << endl;
+                cout << "Broker: Published the Content to Topic:" + topic << endl;
+                sendResponse(
+                    socket, 
+                    topic, 
+                    protobuf::Response::OK,
+                    "Successfully published Content to Topic" + topic
+                );
+
             } else {
                 cout << "Broker: ERROR! Request didn't contain a valid Type!" << endl;
+
+                sendResponse(
+                    socket, 
+                    "", 
+                    protobuf::Response::ERROR,
+                    "Request didn't contain a valid Type!"
+                );
             }
 
         } else {
-            cout << "Broker: ERROR! Request didn't contain a valid Topic!" << endl;
-            // TODO: Send back error message instead of closing it
+            cout << "Broker: ERROR! Request was not valid!" << endl;
+
+            sendResponse(
+                socket, 
+                "", 
+                protobuf::Response::ERROR,
+                "Request was not valid!"
+            );
         }    
     }
 }

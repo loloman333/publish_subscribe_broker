@@ -31,17 +31,24 @@ protobuf::Response Client::receiveResponse(){
 
 void Client::handleResponses(){
     while (true){
-        protobuf::Response response;
+        protobuf::Response response{
+            receiveResponse()
+        };
 
-        response = receiveResponse();
+        cout << "Client: Received a Respond!" << endl;
 
         if (response.type() == protobuf::Response::OK){
             cout << "Client: Broker responded with OK!" << endl;
+            cout << "Client: " + response.body() << endl;
+
         } else if (response.type() == protobuf::Response::ERROR){
             cout << "Client: Broker responded with ERROR!" << endl;
-        } else if (response.type() == protobuf::Response::UPDATE){
-            cout << "Client: Received Update to Topic " + response.topic() + ":" << endl;
             cout << "Client: " + response.body() << endl;
+
+        } else if (response.type() == protobuf::Response::UPDATE){
+
+            cout << "Client: Received following Update to Topic " + response.topic() + ":" << endl;
+            cout << response.body() << endl;
         }
     }
 }
@@ -65,10 +72,14 @@ void Client::executeJSON(json& action){
 
             if (type_s == "SUBSCRIBE"){
                 type = protobuf::Request::SUBSCRIBE;
+                cout << "Client: Sending Request to subsribe to Topic " + topic << endl;
             } else if (type_s == "UNSUBSCRIBE"){
                 type = protobuf::Request::UNSUBSCRIBE;
+                cout << "Client: Sending Request to unsubsribe from Topic " + topic << endl;
             } else if (type_s == "PUBLISH"){
                 type = protobuf::Request::PUBLISH;
+                cout << "Client: Sending Request to publish the following content to Topic " + topic + ":" << endl;
+                cout << content << endl;
             } else {
                 cout << "Client: Invalid 'type' in JSON Configuration File. Command will be ignored!" << endl;
                 continue;
@@ -95,9 +106,11 @@ void Client::start(){
     auto results = resolver.resolve("localhost", to_string(_port));  
     asio::connect(_socket, results);  
 
+    cout << "Client: Connected to Server" << endl;
+
     thread t{&Client::handleResponses, this};
 
-    ifstream ifs("../src/Client/configs/helloworld.json", ifstream::in);
+    ifstream ifs("../src/Client/configs/doorwatcher.json", ifstream::in);
 
     bool keepAlive;
 

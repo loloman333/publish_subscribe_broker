@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 // Protobuf
 #include "messages.pb.h"
@@ -32,11 +33,12 @@ public:
 private:
     short unsigned int _port;
     shared_socket_map  _topics; 
+    //mutex              _topics_locker;     
 
     bool isValid(protobuf::Request&);
 
     protobuf::Request receiveRequest(shared_socket);
-    void sendResponse(shared_socket, protobuf::Response&);
+    void sendResponse(shared_socket, std::string, protobuf::Response_ResponseType, std::string);
 
     void serveClient(shared_socket);
 };

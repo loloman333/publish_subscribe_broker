@@ -1,0 +1,15 @@
+{   
+    "keep_alive": true,
+    "actions": [
+        {   
+            "repeat": 100,
+            "delay_between": 1000,
+            "commands": [
+                { "type": "PUBLISH", "topic": "Frontdoor", 
+                  "content": "Frontdoor just openend!" },
+                { "type": "PUBLISH", "topic": "Frontdoor", 
+                    "content": "Frontdoor closed" }
+            ]
+        }
+    ]
+}
