@@ -46,7 +46,7 @@ protobuf::Request Broker::receiveRequest(shared_socket socket){
     return request;
 }
 
-void Broker::sendResponse(shared_socket socket, protobuf::Response response){
+void Broker::sendResponse(shared_socket socket, protobuf::Response& response){
     string s;
     response.SerializeToString(&s);
 

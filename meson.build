@@ -47,7 +47,7 @@ executable('Broker',
           )
 
 executable('Client',
-           sources : ['src/Client/main.cpp', generated],
+           sources : ['src/Client/client.cpp', generated],
            include_directories : inc_dir,
            dependencies : [thread_dep, protobuf_dep]
           )

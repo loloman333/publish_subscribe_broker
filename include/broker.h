@@ -36,7 +36,7 @@ private:
     bool isValid(protobuf::Request&);
 
     protobuf::Request receiveRequest(shared_socket);
-    void sendResponse(shared_socket, protobuf::Response);
+    void sendResponse(shared_socket, protobuf::Response&);
 
     void serveClient(shared_socket);
 };
