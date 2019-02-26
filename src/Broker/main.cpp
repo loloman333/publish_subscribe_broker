@@ -1,6 +1,9 @@
 #include <iostream>
 #include <map>
+#include <vector>
+#include <thread>
 
+// Protobuf
 #include "messages.pb.h"
 
 // Asio
@@ -13,14 +16,40 @@
 using namespace std;
 using namespace asio::ip;
 
+// Type Definitions
+typedef shared_ptr<tcp::socket>                        shared_socket;
+typedef map<string, vector<shared_socket>>             socket_map;
+typedef shared_ptr<map<string, vector<shared_socket>>> shared_socket_map;
 
 bool isValid(protobuf::Request& request){
     return !request.topic().empty();
 }
 
+void publishContent(
+    string            content, 
+    shared_socket_map topics,
+    string            topic) 
+    {
+
+    protobuf::Response response;
+
+    response.set_type(protobuf::Response::UPDATE);
+    response.set_topic(topic);
+    response.set_body(content);
+
+    string s;
+    response.SerializeToString(&s);
+    
+    for (shared_socket& sock : topics->at(topic)){
+        asio::write(*sock, asio::buffer(s + "ENDOFMESSAGE"));
+    }
+
+    cout << "Broker: Published Content for Topic!" << endl;
+}
+
 void serveClient(
-        shared_ptr<tcp::socket> sock, 
-        shared_ptr<map<string, vector<shared_ptr<tcp::socket>>>> topics) 
+    shared_socket sock, 
+    shared_socket_map topics) 
     {
 
     while (true){
@@ -42,14 +71,13 @@ void serveClient(
 
             int    type  = request.type();
             string topic = request.topic();
-
-            vector<shared_ptr<tcp::socket>> topicSocks;
-
+            
+            // SUBSCRIBE
             if (type == protobuf::Request::SUBSCRIBE) {
 
                 if (topics->count(topic) == 0){
                     topics->emplace(
-                        make_pair(topic, vector<shared_ptr<tcp::socket>>())
+                        make_pair(topic, vector<shared_socket>())
                     );
                 }
 
@@ -57,7 +85,7 @@ void serveClient(
 
                 cout << "Broker: Added Socket to Topic" << endl;
             
-
+            // UNSUBSCRIBE
             } else if (type == protobuf::Request::UNSUBSCRIBE) {
 
                 if (topics->count(topic) == 0){
@@ -74,13 +102,17 @@ void serveClient(
 
                     cout << "Broker: Removed Socket from Topic" << endl;
                 }
-                
+            
+            // PUBLISH
+            } else if (type == protobuf::Request::PUBLISH) {
+                thread t{publishContent, request.body(), topics, topic};
+                t.detach();
             } else {
                 cout << "Broker: ERROR! Request didn't contain a valid Type!" << endl;
-            }    
+            }     
         } else {
             cout << "Broker: ERROR! Request didn't contain a valid Topic!" << endl;
-            // TODO: Send back error message
+            // TODO: Send back error message instead of closing it
             sock->close();
         }    
     }
@@ -92,17 +124,14 @@ int main() {
     tcp::endpoint    ep{tcp::v4(), 6666};                               // Endpoint
     tcp::acceptor    acceptor{ctx, ep};                                 // Acceptor
 
-    shared_ptr<map<string, vector<shared_ptr<tcp::socket>>>> topics;    // Map with all Topics & Pointer to subscribed Sockets
-
-    topics = make_shared<map<string, vector<shared_ptr<tcp::socket>>>>();
+    shared_socket_map topics;                                           // Map with all Topics & Pointer to subscribed Sockets
+    topics = make_shared<socket_map>();        
 
     acceptor.listen();  
     
     while (true){
 
-        shared_ptr<tcp::socket> sock{make_shared<tcp::socket>(ctx)};    // Socket
-
-        //cout << topics.use_count() << endl;
+        shared_socket sock{make_shared<tcp::socket>(ctx)};    // Socket
 
         acceptor.accept(*sock);    // Blocking !!!
 

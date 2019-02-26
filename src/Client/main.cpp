@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 
+// Protobuf
 #include "messages.pb.h"
 
 // Asio
@@ -34,12 +35,13 @@ int main() {
 
     asio::write(sock, asio::buffer(s + "ENDOFMESSAGE"));
 
-    this_thread::sleep_for(chrono::seconds(2));
+    this_thread::sleep_for(chrono::seconds(10));
 
     protobuf::Request request2; 
 
-    request2.set_type(protobuf::Request::UNSUBSCRIBE);
+    request2.set_type(protobuf::Request::PUBLISH);
     request2.set_topic("Hello World!");
+    request2.set_body("This is a test message, have fun with it!");
 
     string s2;
     request2.SerializeToString(&s2);
@@ -47,4 +49,20 @@ int main() {
     asio::write(sock, asio::buffer(s2 + "ENDOFMESSAGE"));
 
     this_thread::sleep_for(chrono::seconds(10));
+
+    // Read Data from Socket & write it into String 
+    asio::streambuf b;
+    asio::read_until(sock, b, "ENDOFMESSAGE");     // Blocking !!!
+    asio::streambuf::const_buffers_type bufs = b.data();
+    string s3{asio::buffers_begin(bufs),
+             asio::buffers_begin(bufs) + b.size()}; 
+    s.erase(s.size() - 12);
+    
+    // Parse Request from String
+    protobuf::Response response;
+    response.ParseFromString(s3);
+
+    cout << "Client: Got a Response" << endl;
+    cout << "Topic: " << response.topic() << endl;
+    cout << "Content: " << response.body() << endl;
 }
