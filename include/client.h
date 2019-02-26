@@ -3,6 +3,8 @@
 // --------------------------- Includes --------------------------------------------------------
 
 #include <iostream>
+#include <fstream>
+#include "json.hpp"
 
 // Protobuf
 #include "messages.pb.h"
@@ -21,8 +23,15 @@ public:
     void start();
     
 private:
-    short unsigned int _port;
+    short unsigned int    _port;
+    asio::io_context      _ctx;
+    asio::ip::tcp::socket _socket;
 
-    void sendRequest(asio::ip::tcp::socket&, protobuf::Request&);
-    protobuf::Response receiveResponse(asio::ip::tcp::socket&);
+    void handleResponses();
+
+    void sendRequest(protobuf::Request&);
+    protobuf::Response receiveResponse();
+
+    void executeJSON(nlohmann::json&);
+
 };

@@ -2,20 +2,21 @@
 
 using namespace std;
 using namespace asio::ip;
+using json = nlohmann::json;
 
-Client::Client(short unsigned int port) : _port{port} {}
+Client::Client(short unsigned int port) : _port{port}, _socket{_ctx}{}
 
-void Client::sendRequest(tcp::socket& socket, protobuf::Request& request){
+void Client::sendRequest(protobuf::Request& request){
     string s;
     request.SerializeToString(&s);
 
-    asio::write(socket, asio::buffer(s + "ENDOFMESSAGE"));
+    asio::write(_socket, asio::buffer(s + "ENDOFMESSAGE"));
 }
 
-protobuf::Response Client::receiveResponse(tcp::socket& socket){
+protobuf::Response Client::receiveResponse(){
     // Read Data from Socket & write it into String 
     asio::streambuf b;
-    asio::read_until(socket, b, "ENDOFMESSAGE");     // Blocking !!!
+    asio::read_until(_socket, b, "ENDOFMESSAGE");     // Blocking !!!
     asio::streambuf::const_buffers_type bufs = b.data();
     string s{asio::buffers_begin(bufs),
              asio::buffers_begin(bufs) + b.size()}; 
@@ -28,42 +29,102 @@ protobuf::Response Client::receiveResponse(tcp::socket& socket){
     return response;
 }
 
+void Client::handleResponses(){
+    while (true){
+        protobuf::Response response;
+
+        response = receiveResponse();
+
+        if (response.type() == protobuf::Response::OK){
+            cout << "Client: Broker responded with OK!" << endl;
+        } else if (response.type() == protobuf::Response::ERROR){
+            cout << "Client: Broker responded with ERROR!" << endl;
+        } else if (response.type() == protobuf::Response::UPDATE){
+            cout << "Client: Received Update to Topic " + response.topic() + ":" << endl;
+            cout << "Client: " + response.body() << endl;
+        }
+    }
+}
+
+void Client::executeJSON(json& action){
+
+    //Check > 0 (both)
+    int repeat        = action.value("repeat", 1);          // What if string? What if float?
+    int delay_after   = action.value("delay_after",  0);
+    int delay_between = action.value("delay_between",  0);
+   
+    for (int i = 0; i < repeat; i++){
+
+        for (json& command : action.value("commands", json::array())){
+
+            string type_s  = command.at("type");
+            string topic   = command.at("topic");
+            string content = command.value("content", "");
+
+            protobuf::Request::RequestType type;  
+
+            if (type_s == "SUBSCRIBE"){
+                type = protobuf::Request::SUBSCRIBE;
+            } else if (type_s == "UNSUBSCRIBE"){
+                type = protobuf::Request::UNSUBSCRIBE;
+            } else if (type_s == "PUBLISH"){
+                type = protobuf::Request::PUBLISH;
+            } else {
+                cout << "Client: Invalid 'type' in JSON Configuration File. Command will be ignored!" << endl;
+                continue;
+            }
+            
+            protobuf::Request request;
+
+            request.set_type(type);
+            request.set_topic(topic);
+            request.set_body(content);
+
+            sendRequest(request);
+
+            this_thread::sleep_for(chrono::milliseconds(delay_between));
+        } 
+        this_thread::sleep_for(chrono::milliseconds(delay_after));
+    }
+}
+
 void Client::start(){
-        
-    asio::io_context ctx;                           // IO Context
-    tcp::resolver resolver{ctx};                    // Resolver
 
-    auto results = resolver.resolve("localhost", "6666");    
+    tcp::resolver resolver{_ctx};                    // Resolver
 
-    tcp::socket socket{ctx};                        // Socket
+    auto results = resolver.resolve("localhost", to_string(_port));  
+    asio::connect(_socket, results);  
 
-    asio::connect(socket, results);
-    
-    protobuf::Request request;                      // Protobuf Request Object
-    
+    thread t{&Client::handleResponses, this};
 
-    request.set_type(protobuf::Request::SUBSCRIBE);
-    request.set_topic("Hello World!");
+    ifstream ifs("../src/Client/configs/helloworld.json", ifstream::in);
 
-    sendRequest(ref(socket), request);
+    bool keepAlive;
 
-    this_thread::sleep_for(chrono::seconds(10));
+    try {
+        json json_file = json::parse(ifs);
 
-    request.set_type(protobuf::Request::PUBLISH);
-    request.set_topic("Hello World!");
-    request.set_body("This is a test message, have fun with it!");
+        keepAlive = json_file.value("keep_alive", true);
 
-    sendRequest(ref(socket), request);
+        for (json& action : json_file.at("actions")){
+            executeJSON(action);
+        }
+            
+    } catch (json::parse_error& e){
+        cout << "Client: Could not find or parse the JSON Configuration File!" << endl;
+        return;
+    } catch (json::exception& e){
+        cout << "Client: Something with JSON went wrong!" << endl;
+        cout << "Client: See 'description.txt' in the configs Folder to see the correct structure." << endl;
+        cout << "Client: " << e.id << " | " << e.what() << endl;
+        return;
+    }
 
-    this_thread::sleep_for(chrono::seconds(10));
-
-    protobuf::Response response{
-        receiveResponse(ref(socket))
-    };
-
-    cout << "Client: Got a Response" << endl;
-    cout << "Topic: " << response.topic() << endl;
-    cout << "Content: " << response.body() << endl;
+    if (keepAlive){
+        t.join();
+    } else {
+        t.detach();
+    }
 }
 
 int main(){
