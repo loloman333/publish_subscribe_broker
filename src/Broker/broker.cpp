@@ -3,7 +3,11 @@
 using namespace std;
 using namespace asio::ip;
 
-Broker::Broker(short unsigned int port) : _port{port}, _topics{make_shared<socket_map>()} {}
+Broker::Broker(short unsigned int port, string name) : 
+    _port{port}, 
+    _topics{make_shared<socket_map>()},
+    _name{name} 
+{}
 
 void Broker::start(){
 
@@ -13,7 +17,7 @@ void Broker::start(){
 
     acceptor.listen();  
 
-    cout << "Broker: Now listening on port " + to_string(_port) << endl;
+    spdlog::get(_name)->info("Listening on port " + to_string(_port));
     
     while (true){
 
@@ -21,7 +25,7 @@ void Broker::start(){
 
         acceptor.accept(*sock);  // Blocking !!!
 
-        cout << "Broker: A new Client connected" << endl;
+        spdlog::get(_name)->info("A new Client connected");
 
         thread t{&Broker::serveClient, this, move(sock)};
         t.detach();    
@@ -85,7 +89,7 @@ void Broker::serveClient(shared_socket socket){
             // SUBSCRIBE
             if (type == protobuf::Request::SUBSCRIBE) {
 
-                cout << "Broker: Received Request to add Client to Topic " + topic << endl;
+                spdlog::get(_name)->info("Received Request : SUBSCRIBE " + topic);
 
                 unique_lock lck{_topics_locker};
 
@@ -99,25 +103,23 @@ void Broker::serveClient(shared_socket socket){
 
                 lck.unlock();
 
-                cout << "Broker: Added Client to Topic " + topic << endl;
+                spdlog::get(_name)->info("Sending  Response: OK (SUBSCRIBE " + topic + ")");
 
                 sendResponse(
                     socket, 
                     topic, 
                     protobuf::Response::OK,
-                    "Successfully subscribed to Topic " + topic
+                    "SUBSCRIBE " + topic
                 );
             
             // UNSUBSCRIBE
             } else if (type == protobuf::Request::UNSUBSCRIBE) {
-
-                cout << "Broker: Received Request to remove Client from Topic " + topic << endl;
-
-                bool removed = false;
+                
+                spdlog::get(_name)->info("Received Request : UNSUBSCRIBE " + topic);
 
                 unique_lock lck{_topics_locker};
 
-                if (! _topics->count(topic) == 0){
+                if (_topics->count(topic) != 0){
 
                     auto it = _topics->at(topic).begin();
 
@@ -125,97 +127,80 @@ void Broker::serveClient(shared_socket socket){
 
                         if (it->get() == socket.get()){
                             it = _topics->at(topic).erase(it);
-                            removed = true;
                         }
                     }
                 }
 
                 lck.unlock();
 
-                if (removed){   
-                    cout << "Broker: Removed Client from Topic " + topic << endl;
+                spdlog::get(_name)->info("Sending  Response: OK (UNSUBSCRIBE " + topic + ")");
 
-                    sendResponse(
-                        socket, 
-                        topic, 
-                        protobuf::Response::OK,
-                        "Successfully unsubscribed from Topic " + topic
-                    );
-                } else {
-                    cout << "Broker: Client wasn't subscribed to Topic " + topic << endl;
-
-                    sendResponse(
-                        socket, 
-                        topic, 
-                        protobuf::Response::OK,
-                        "No need to unsubscribe from Topic " + topic + ". You were not subscribed to it."
-                    );
-                }
-            
-            // PUBLISH
-            } else if (type == protobuf::Request::PUBLISH) {
-
-                cout << "Broker: Received Request to publish the following Content to Topic " + topic << endl;
-                cout << request.body() << endl;
-
-                unique_lock lck{_topics_locker};
-
-                if (_topics->count(topic) == 0){
-                    cout << "Broker: Nobody subscribed to Topic" + topic + ". Content will not be published." << endl;
-
-                    sendResponse(
-                        socket, 
-                        topic, 
-                        protobuf::Response::OK,
-                        "Nobody was subscribed to Topic " + topic + ". Content was not published."
-                    );
-                    break;
-                }
-
-                for (shared_socket& sock : _topics->at(topic)){
-                    sendResponse(
-                        sock, 
-                        topic, 
-                        protobuf::Response::UPDATE,
-                        request.body()
-                    );
-                }
-
-                lck.unlock();
-
-                cout << "Broker: Published the Content to Topic:" + topic << endl;
                 sendResponse(
                     socket, 
                     topic, 
                     protobuf::Response::OK,
-                    "Successfully published Content to Topic" + topic
+                    "UNSUBSCRIBE " + topic
+                );
+            
+            // PUBLISH
+            } else if (type == protobuf::Request::PUBLISH) {
+
+                spdlog::get(_name)->info("Received Request : PUBLISH " + topic + ": " + request.body());
+
+                unique_lock lck{_topics_locker};
+
+                if (_topics->count(topic) != 0){
+
+                    for (shared_socket& sock : _topics->at(topic)){
+                        sendResponse(
+                            sock, 
+                            topic, 
+                            protobuf::Response::UPDATE,
+                            request.body()
+                        );
+                    }
+                }
+
+                lck.unlock();
+
+                spdlog::get(_name)->info("Sending  Response: OK (PUBLISH " + topic + ")");
+
+                sendResponse(
+                    socket, 
+                    topic, 
+                    protobuf::Response::OK,
+                    "PUBLISH" + topic
                 );
 
             } else {
-                cout << "Broker: ERROR! Request didn't contain a valid Type!" << endl;
+
+                spdlog::get(_name)->error("Invalid Request Type!");
 
                 sendResponse(
                     socket, 
                     "", 
                     protobuf::Response::ERROR,
-                    "Request didn't contain a valid Type!"
+                    "Invalid Request Type!"
                 );
             }
 
         } else {
-            cout << "Broker: ERROR! Request was not valid!" << endl;
+            spdlog::get(_name)->error("Invalid Request!");
 
             sendResponse(
                 socket, 
                 "", 
                 protobuf::Response::ERROR,
-                "Request was not valid!"
+                "Invalid Request!"
             );
         }    
     }
 }
 
 int main() {
-    Broker broker{6666};
+
+    auto logger = spdlog::stdout_color_mt("Broker");
+
+    Broker broker{6666, "Broker"};
     broker.start();
 }

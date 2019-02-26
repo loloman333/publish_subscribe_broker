@@ -4,7 +4,11 @@ using namespace std;
 using namespace asio::ip;
 using json = nlohmann::json;
 
-Client::Client(short unsigned int port) : _port{port}, _socket{_ctx}{}
+Client::Client(short unsigned int port, string name) :
+    _port{port}, 
+    _socket{_ctx},
+    _name{name}
+{}
 
 void Client::sendRequest(protobuf::Request& request){
     string s;
@@ -38,13 +42,13 @@ void Client::handleResponses(){
         };
 
         if (response.type() == protobuf::Response::OK){
-            cout << "Client: Broker responded with: OK " + response.body() << endl;
+            spdlog::get(_name)->info("Received Response: OK (" + response.body() + ")");
 
         } else if (response.type() == protobuf::Response::ERROR){
-            cout << "Client: Broker responded with: ERROR " + response.body() << endl;
+            spdlog::get(_name)->warn("Received Response: ERROR (" + response.body() + ")");
 
         } else if (response.type() == protobuf::Response::UPDATE){
-            cout << "Client: Received Update to Topic " + response.topic() + ": " + response.body() << endl;
+            spdlog::get(_name)->info("Received Update for " + response.topic() + ": " + response.body());
         }
     }
 }
@@ -68,16 +72,15 @@ void Client::executeJSON(json& action){
 
             if (type_s == "SUBSCRIBE"){
                 type = protobuf::Request::SUBSCRIBE;
-                cout << "Client: Sending Request to subsribe to Topic " + topic << endl;
+                spdlog::get(_name)->info("Sending  Request : SUBSCRIBE " + topic);
             } else if (type_s == "UNSUBSCRIBE"){
                 type = protobuf::Request::UNSUBSCRIBE;
-                cout << "Client: Sending Request to unsubsribe from Topic " + topic << endl;
+                spdlog::get(_name)->info("Sending  Request : UNSUBSCRIBE " + topic);
             } else if (type_s == "PUBLISH"){
                 type = protobuf::Request::PUBLISH;
-                cout << "Client: Sending Request to publish the following content to Topic " + topic + ":" << endl;
-                cout << content << endl;
+                spdlog::get(_name)->info("Sending  Request : PUBLISH " + topic + ": " + content);
             } else {
-                cout << "Client: Invalid 'type' in JSON Configuration File. Command will be ignored!" << endl;
+                spdlog::get(_name)->warn("Invalid Value for Field 'type' in JSON Configuration File. Command will be ignored!");
                 continue;
             }
             
@@ -102,7 +105,7 @@ void Client::start(){
     auto results = resolver.resolve("localhost", to_string(_port));  
     asio::connect(_socket, results);  
 
-    cout << "Client: Connected to Server" << endl;
+    spdlog::get(_name)->info("Connected to Server");
 
     thread t{&Client::handleResponses, this};
 
@@ -120,12 +123,12 @@ void Client::start(){
         }
             
     } catch (json::parse_error& e){
-        cout << "Client: Could not find or parse the JSON Configuration File!" << endl;
+        spdlog::get(_name)->error("Could not find or parse the JSON Configuration File!");
         return;
     } catch (json::exception& e){
-        cout << "Client: Something with JSON went wrong!" << endl;
-        cout << "Client: See 'description.txt' in the configs Folder to see the correct structure." << endl;
-        cout << "Client: " << e.id << " | " << e.what() << endl;
+        spdlog::get(_name)->error("Something with JSON went wrong!");
+        spdlog::get(_name)->error(to_string(e.id) + " | " + e.what());
+        spdlog::get(_name)->info("See 'description.txt' in the configs Folder to see the correct JSON structure.");
         return;
     }
 
@@ -137,6 +140,9 @@ void Client::start(){
 }
 
 int main(){
-    Client client{6666};
+
+    auto logger = spdlog::stdout_color_mt("Client");
+
+    Client client{6666, "Client"};
     client.start();
 }

@@ -18,6 +18,13 @@
 #include "asio.hpp"
 #pragma GCC diagnostic pop
 
+// Spdlog
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#pragma GCC diagnostic pop
+
 // ------------------------------------------ Type Definitions ---------------------------------
 
 typedef std::shared_ptr<asio::ip::tcp::socket>                             shared_socket;
@@ -27,13 +34,14 @@ typedef std::shared_ptr<std::map<std::string, std::vector<shared_socket>>> share
 // -------------------------- Class -----------------------------------------------------------
 class Broker{
 public:
-    Broker(short unsigned int);
+    Broker(short unsigned int, std::string);
     void start();
     
 private:
     short unsigned int _port;
     shared_socket_map  _topics; 
-    std::mutex         _topics_locker;     
+    std::mutex         _topics_locker;
+    std::string        _name;     
 
     bool isValid(protobuf::Request&);
 
