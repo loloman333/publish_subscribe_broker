@@ -1,0 +1,12 @@
+{   
+    "keep_alive": true,
+    "actions": [
+        {
+            "commands": [
+                { "type": "SUBSCRIBE", "topic": "Frontdoor"  },
+                { "type": "SUBSCRIBE", "topic": "Backdoor"   },
+                { "type": "SUBSCRIBE", "topic": "Secret Door"}
+            ]
+        }
+    ]
+}

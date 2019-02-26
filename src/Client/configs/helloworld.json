@@ -1,0 +1,13 @@
+{
+    "actions": [
+        {
+            "repeat": 1,
+            "commands": [
+                { "type": "SUBSCRIBE",   "topic": "Hello World!" },
+                { "type": "PUBLISH",     "topic": "Hello World!", 
+                  "content": "This is a test message, have fun with it!"},
+                { "type": "UNSUBSCRIBE", "topic": "Hello World!" }
+            ]
+        }
+    ]
+}

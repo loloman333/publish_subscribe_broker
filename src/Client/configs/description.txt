@@ -1,0 +1,20 @@
+"keep_alive": Bool         // If this is true the Client won't stop after execution
+"actions":    Array        // Contains the 'blocks' of commands to execute
+One Action contains of:
+
+    "repeat": Integer >= 0; Default: 1      // Defines how often the following commands will be executed
+
+    "delay" : Integer >= 0; Default: 0      // Defines a delay (in milliseconds) before executeing the commands again
+                                            // The delay will be triggered once after execution of the Commands if "repeat" = 1
+
+    "commands": Array       // Containins the commands to execute
+    One Command contains of:
+
+        "type":    String; Required     // Specifies the type of the command
+                                        // valid values = ["SUBSCRIBE", "UNSUBSCRIBE", "PUBLISH"]
+
+        "topic":   String; Required     // The topic the command should be executed on 
+                                        // Can be any string value   
+
+        "content": String; Default: ""  // Will only be read if "type" = PUBLISH
+                                        // Contains the message to publish; Can be any string value
