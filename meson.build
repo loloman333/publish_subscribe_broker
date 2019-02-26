@@ -41,7 +41,7 @@ inc_dir = include_directories('include')
 #protobuf: 
 
 executable('Broker',
-           sources : ['src/Broker/main.cpp', generated],
+           sources : ['src/Broker/broker.cpp', generated],
            include_directories : inc_dir,
            dependencies : [thread_dep, protobuf_dep]
           )
