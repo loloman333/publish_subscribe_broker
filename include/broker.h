@@ -8,6 +8,9 @@
 #include <thread>
 #include <mutex>
 
+// JSON
+#include "json.hpp"
+
 // Protobuf
 #include "messages.pb.h"
 
@@ -31,22 +34,24 @@
 // ------------------------------------------ Type Definitions ---------------------------------
 
 typedef std::shared_ptr<asio::ip::tcp::socket>                             shared_socket;
-typedef std::map<std::string, std::vector<shared_socket>>                  socket_map;
-typedef std::shared_ptr<std::map<std::string, std::vector<shared_socket>>> shared_socket_map;
+typedef std::map<std::string, std::vector<shared_socket>>                  shared_socket_map;
 
 // -------------------------- Class -----------------------------------------------------------
 class Broker{
 public:
-    Broker(short unsigned int, std::string);
+    Broker(short unsigned int, std::string, std::string);
     void start();
     
 private:
-    short unsigned int _port;
-    shared_socket_map  _topics; 
-    std::mutex         _topics_locker;
-    std::string        _name;     
+    short unsigned int       _port;
+    shared_socket_map        _topics; 
+    std::mutex               _topics_locker;
+    std::string              _name; 
+    std::string              _config;
+    std::vector<std::string> _topics_s;
 
     bool isValid(protobuf::Request&);
+    bool topicAllowed(std::string);
 
     protobuf::Request receiveRequest(shared_socket);
     void sendResponse(shared_socket, std::string, protobuf::Response_ResponseType, std::string);
