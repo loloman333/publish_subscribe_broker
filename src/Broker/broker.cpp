@@ -4,10 +4,11 @@ using namespace std;
 using namespace asio::ip;
 using json = nlohmann::json;
 
-Broker::Broker(short unsigned int port, string name, string config) : 
+Broker::Broker(short unsigned int port, string name, string config, string save) : 
     _port{port}, 
     _name{name},
-    _config{config} 
+    _config{config},
+    _save{save}
 {}
 
 void Broker::start(){
@@ -40,6 +41,14 @@ void Broker::start(){
         spdlog::get(_name)->info("No Configuration File was stated. Topics will be generated dynamically.");
     }
 
+    // Output File Logger Information
+    if (_save == ""){
+        spdlog::get(_name)->info("No File for Logging was stated. Updates to Topics won't be saved to a File.");
+    } else {
+        spdlog::get(_name)->info("Updates for Topic will be saved to: " + _save);
+    }
+
+    // Asio Network Stuff
     asio::io_context ctx;                                               // IO Context
     tcp::endpoint    ep{tcp::v4(), _port};                              // Endpoint
     tcp::acceptor    acceptor{ctx, ep};                                 // Acceptor    
@@ -204,6 +213,11 @@ void Broker::serveClient(shared_socket socket){
 
                 if (_topics.count(topic) != 0){
 
+                    if (_save != ""){                        
+                        spdlog::get(_name + " File Logger")->info("[" + topic + "] " + request.body());
+                        spdlog::get(_name + " File Logger")->flush();
+                    }
+
                     for (shared_socket& sock : _topics.at(topic)){
 
                         if (sock.get() != socket.get()){
@@ -238,7 +252,6 @@ void Broker::serveClient(shared_socket socket){
                     "Invalid Request Type!"
                 );
             }
-
         } else {
             spdlog::get(_name)->error("Invalid Request!");
 
@@ -260,17 +273,26 @@ int main(int argc, char* argv[]){
     unsigned short int port{6666};
     string             name{"Broker"};
     string             config{""};
+    string             save{""};
 
-    app.add_option("-p, --port",   port, "The Port the Broker will listen on (Default:  6666)");
-    app.add_option("-n, --name",   name, "The Name of the Broker (Default: 'Broker')");
+    app.add_option("-p, --port",   port,   "The Port the Broker will listen on (Default:  6666)");
+    app.add_option("-n, --name",   name,   "The Name of the Broker (Default: 'Broker')");
     app.add_option("-c, --config", config, "The Path to the JSON Config File (If this is not set topics will be created dynamically)");
+    app.add_option("-s, --save",   save,   "The Path to the File where the Messages will be logged to (If this is not set Messages won't be logged)");
 
     CLI11_PARSE(app, argc, argv);
 
     // Logger
-    auto logger = spdlog::stdout_color_mt(name);
+    auto logger      = spdlog::stdout_color_mt(name);
+    if (save != ""){
+        try {  
+            auto file_logger = spdlog::basic_logger_mt(name + " File Logger", save);
+        } catch (const spdlog::spdlog_ex &ex) {
+            logger->error("Could not generate or find the Save File!");
+        }
+    }
 
     // Start Broker
-    Broker broker{6666, name, config};
+    Broker broker{6666, name, config, save};
     broker.start();
 }

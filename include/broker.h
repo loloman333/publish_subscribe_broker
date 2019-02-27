@@ -29,6 +29,7 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
 #pragma GCC diagnostic pop
 
 // ------------------------------------------ Type Definitions ---------------------------------
@@ -39,7 +40,7 @@ typedef std::map<std::string, std::vector<shared_socket>>                  share
 // -------------------------- Class -----------------------------------------------------------
 class Broker{
 public:
-    Broker(short unsigned int, std::string, std::string);
+    Broker(short unsigned int, std::string, std::string, std::string);
     void start();
     
 private:
@@ -49,6 +50,7 @@ private:
     std::string              _name; 
     std::string              _config;
     std::vector<std::string> _topics_s;
+    std::string               _save;
 
     bool isValid(protobuf::Request&);
     bool topicAllowed(std::string);
