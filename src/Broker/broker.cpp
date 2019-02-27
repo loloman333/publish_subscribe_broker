@@ -205,12 +205,15 @@ void Broker::serveClient(shared_socket socket){
                 if (_topics.count(topic) != 0){
 
                     for (shared_socket& sock : _topics.at(topic)){
-                        sendResponse(
-                            sock, 
-                            topic, 
-                            protobuf::Response::UPDATE,
-                            request.body()
-                        );
+
+                        if (sock.get() != socket.get()){
+                            sendResponse(
+                                sock, 
+                                topic, 
+                                protobuf::Response::UPDATE,
+                                request.body()
+                            );
+                        }
                     }
                 }
 
