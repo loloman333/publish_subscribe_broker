@@ -1,14 +1,23 @@
 {   
-    "keep_alive": true,
+    "keep_alive": false,
     "actions": [
         {   
-            "repeat": 100,
-            "delay_between": 1000,
+            "repeat": 5,
+            "delay_between": 3000,
             "commands": [
                 { "type": "PUBLISH", "topic": "Frontdoor", 
-                  "content": "Frontdoor just openend!" },
+                  "content": "Frontdoor just openend" },
                 { "type": "PUBLISH", "topic": "Frontdoor", 
                     "content": "Frontdoor closed" }
+            ]
+        }, 
+        {
+            "delay_between": 5000,
+            "commands": [
+                { "type": "PUBLISH", "topic": "Frontdoor", 
+                    "content": "Frontdoor was locked" },
+                { "type": "PUBLISH", "topic": "Frontdoor", 
+                  "content": "Frontdoor was blown up..." }
             ]
         }
     ]

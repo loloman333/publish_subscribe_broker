@@ -197,10 +197,23 @@ void Broker::serveClient(shared_socket socket){
     }
 }
 
-int main() {
+int main(int argc, char* argv[]){
 
-    auto logger = spdlog::stdout_color_mt("Broker");
+    // Command Line Interface
+    CLI::App app{};
 
-    Broker broker{6666, "Broker"};
+    unsigned short int port{6666};
+    string             name{"Broker"};
+
+    app.add_option("-p, --port",   port, "The Port the Broker will listen on (Default:  6666)");
+    app.add_option("-n, --name",   name, "The Name of the Broker (Default: 'Broker')");
+
+    CLI11_PARSE(app, argc, argv);
+
+    // Logger
+    auto logger = spdlog::stdout_color_mt(name);
+
+    // Start Broker
+    Broker broker{6666, name};
     broker.start();
 }

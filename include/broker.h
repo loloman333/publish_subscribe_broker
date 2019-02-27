@@ -11,6 +11,9 @@
 // Protobuf
 #include "messages.pb.h"
 
+// CLI11
+#include "CLI11.hpp"
+
 // Asio
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
