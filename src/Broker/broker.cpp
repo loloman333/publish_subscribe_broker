@@ -169,7 +169,7 @@ void Broker::serveClient(shared_socket socket){
                     socket, 
                     topic, 
                     protobuf::Response::OK,
-                    "PUBLISH" + topic
+                    "PUBLISH " + topic
                 );
 
             } else {

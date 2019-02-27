@@ -1,6 +1,6 @@
 Description of the JSON Struture:
 |    
-|    "keep_alive": Bool; Default: False                 // If this is true the Client won't stop after execution
+|    "keep_alive": Bool; Default: True                  // If this is false the Client will stop after execution
 |    
 |    "actions":    Array; Required                      // Contains the 'blocks' of commands to execute
 |    One Action contains of:

@@ -4,10 +4,12 @@ using namespace std;
 using namespace asio::ip;
 using json = nlohmann::json;
 
-Client::Client(short unsigned int port, string name) :
-    _port{port}, 
-    _socket{_ctx},
-    _name{name}
+Client::Client(string hostname, short unsigned int port, string config, string name) :
+    _hostname{hostname},
+    _port{port},
+    _config{config},
+    _name{name},
+    _socket{_ctx}
 {}
 
 void Client::sendRequest(protobuf::Request& request){
@@ -102,14 +104,14 @@ void Client::start(){
 
     tcp::resolver resolver{_ctx};                    // Resolver
 
-    auto results = resolver.resolve("localhost", to_string(_port));  
+    auto results = resolver.resolve(_hostname, to_string(_port));  
     asio::connect(_socket, results);  
 
-    spdlog::get(_name)->info("Connected to Server");
+    spdlog::get(_name)->info("Connected to Server at " + _hostname + ":" + to_string(_port));
 
     thread t{&Client::handleResponses, this};
 
-    ifstream ifs("../src/Client/configs/doorwatcher.json", ifstream::in);
+    ifstream ifs(_config, ifstream::in);
 
     bool keepAlive;
 
@@ -139,10 +141,27 @@ void Client::start(){
     }
 }
 
-int main(){
+int main(int argc, char* argv[]){
 
-    auto logger = spdlog::stdout_color_mt("Client");
+    // Command Line Interface
+    CLI::App app{};
 
-    Client client{6666, "Client"};
+    unsigned short int port{6666};
+    string             hostname{"localhost"};
+    string             configFile;
+    string             name{"Client"};
+
+    app.add_option("-s, --server", port, "The Hostname the Client will connect to (Default:  'localhost')"); 
+    app.add_option("-p, --port",   port, "The Port the Client will connect to (Default:  6666)"); 
+    app.add_option("-c, --config", configFile, "The Path to the Config File")->required();
+    app.add_option("-n, --name",   name, "The Name of the Client (Default: 'Client')");
+
+    CLI11_PARSE(app, argc, argv);
+
+    // Logger
+    auto logger = spdlog::stdout_color_mt(name);
+
+    // Start the Client
+    Client client{hostname, port, configFile, name};
     client.start();
 }

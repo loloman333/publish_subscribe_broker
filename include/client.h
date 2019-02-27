@@ -11,6 +11,9 @@
 // Protobuf
 #include "messages.pb.h"
 
+// CLI11
+#include "CLI11.hpp"
+
 // Asio
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -28,14 +31,17 @@
 // -------------------------- Class -----------------------------------------------------------
 class Client{
 public:
-    Client(short unsigned int, std::string);
+    Client(std::string, short unsigned int, std::string, std::string);
     void start();
     
 private:
+    std::string           _hostname;
     short unsigned int    _port;
+    std::string           _config;
+    std::string           _name;
+
     asio::io_context      _ctx;
     asio::ip::tcp::socket _socket;
-    std::string           _name;
 
     void handleResponses();
 
