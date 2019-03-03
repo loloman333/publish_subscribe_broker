@@ -36,14 +36,18 @@ void Broker::start(){
         spdlog::get(_name)->info("Configuration File successfully read. The following topics will be available:");
         for (string s : _topics_s){
             spdlog::get(_name)->info(s); 
+            _topics.emplace(
+                make_pair(s, vector<shared_socket>())
+            );
         }
+
     } else {
-        spdlog::get(_name)->info("No Configuration File was stated. Topics will be generated dynamically.");
+        spdlog::get(_name)->warn("No Configuration File was stated. Topics will be generated dynamically.");
     }
 
     // Output File Logger Information
     if (_save == ""){
-        spdlog::get(_name)->info("No File for Logging was stated. Updates to Topics won't be saved to a File.");
+        spdlog::get(_name)->warn("No File for Logging was stated. Updates to Topics won't be saved to a File.");
     } else {
         spdlog::get(_name)->info("Updates for Topic will be saved to: " + _save);
     }
@@ -72,8 +76,102 @@ void Broker::start(){
     acceptor.close();
 }
 
-bool Broker::isValid(protobuf::Request& request){
-    return !request.topic().empty();
+vector<string> splitString(string s, string delim){
+    auto start = 0U;
+    auto end = s.find(delim);
+
+    vector<string> tokens;
+
+    while (end != string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delim.length();
+        end = s.find(delim, start);
+        
+    }
+    tokens.push_back(s.substr(start, end));
+
+    return tokens;
+}
+
+bool Broker::isValid(protobuf::Request& request, shared_socket& socket){
+
+    // Empty Topic ?
+    if (request.topic().empty()){
+
+        spdlog::get(_name)->info("Received Request with empty Topic!");
+        spdlog::get(_name)->info("Sending  Response: ERROR (Topic can not be empty!)");
+        sendResponse(
+            socket, 
+            "", 
+            protobuf::Response::ERROR,
+            "Topic can not be empty!"
+        );
+        return false;
+    
+    // Invalid Request Type ?
+    } else if (request.type() != protobuf::Request::SUBSCRIBE &&
+               request.type() != protobuf::Request::UNSUBSCRIBE &&
+               request.type() != protobuf::Request::PUBLISH ){
+        
+        spdlog::get(_name)->info("Received Request with invalid Type!");
+        spdlog::get(_name)->info("Sending  Response: ERROR (Request Type was invalid!)");
+        sendResponse(
+            socket, 
+            "", 
+            protobuf::Response::ERROR,
+            "Request Type was invalid!"
+        );
+        return false;
+
+    // Invalid Topic ?
+    } else {
+
+        // Cut leading "/"" if present
+        char firstChar = request.topic().at(0);
+        if (firstChar == '/'){
+            request.set_topic(request.topic().substr(1));
+        }
+        bool valid = true;
+
+        // Split string in tokens 
+        vector<string> tokens = splitString(request.topic(), "/");        
+
+        // Check if the tokens are valid 
+        for (string& token : tokens){
+            if (token == "") {
+                valid = false;
+                break;
+            } else if (token.find('+') != string::npos || token.find('#') != string::npos) {
+                if (token.size() != 1){
+                    valid = false;
+                } else if (request.type() == protobuf::Request::PUBLISH){
+                    spdlog::get(_name)->info("Received Request: PUBLISH with wildcard in Topic!");
+                    spdlog::get(_name)->info("Sending  Response: ERROR (Can not use wildcard in Topic with PUBLISH!)");
+                    sendResponse(
+                        socket, 
+                        "", 
+                        protobuf::Response::ERROR,
+                        "Can not use wildcard in Topic with PUBLISH!"
+                    );
+                    return false;;
+                }
+            }  
+        }
+
+        // If something wasn't valid -> inform Client & return false 
+        if (!valid){ 
+            spdlog::get(_name)->info("Received Request with invalid Topic!");
+            spdlog::get(_name)->info("Sending  Response: ERROR (Topic was invalid!)");
+            sendResponse(
+                socket, 
+                "", 
+                protobuf::Response::ERROR,
+                "Topic was invalid: " + request.topic()
+            );
+            return valid;
+        } 
+    }
+    return true;
 }
 
 bool Broker::topicAllowed(string topic){
@@ -122,16 +220,58 @@ void Broker::sendResponse(
     response.SerializeToString(&s);
 
     asio::write(*socket, asio::buffer(s + "ENDOFMESSAGE"));
+
+    this_thread::sleep_for(chrono::milliseconds(1)); // ???
+}
+
+vector<string> Broker::resolveWildcards(string topicWildcard){
+    vector<string> resolved;
+
+    if (topicWildcard.find("+") != string::npos || topicWildcard.find("#") != string::npos){
+
+        spdlog::get(_name)->info("Request Topic contains wildcards and includes the following Topics: ");
+
+        while (topicWildcard.find("+") != string::npos){
+            topicWildcard.replace(
+                topicWildcard.find("+"), 
+                1, 
+                "[^/]*"
+            );
+        }
+
+        while (topicWildcard.find("#") != string::npos){
+            topicWildcard.replace(
+                topicWildcard.find("#"), 
+                1, 
+                "[^]*"
+            );
+        }
+
+        auto rgx = regex(topicWildcard); 
+
+        for (auto& pair : _topics){
+            if (regex_match(pair.first, rgx)){
+                spdlog::get(_name)->info(pair.first);
+                resolved.push_back(pair.first);
+            }
+        }
+
+    } else {
+        resolved.push_back(topicWildcard);
+    }
+
+    return resolved;
 }
 
 void Broker::serveClient(shared_socket socket){
+
     while (true){
 
         protobuf::Request request{ 
             receiveRequest(socket)
         };
 
-        if (isValid(ref(request))){
+        if (isValid(ref(request), ref(socket))){
 
             int    type  = request.type();
             string topic = request.topic();
@@ -143,37 +283,42 @@ void Broker::serveClient(shared_socket socket){
 
                 unique_lock lck{_topics_locker};
 
-                if (_topics.count(topic) == 0){
-                    if (topicAllowed(topic)){
-                        _topics.emplace(
-                            make_pair(topic, vector<shared_socket>())
-                        );
-                    } else {
-                        spdlog::get(_name)->info("Sending  Response: ERROR (SUBSCRIBE " + topic + ")");
+                vector<string> resolvedTopics = resolveWildcards(topic);
 
-                        sendResponse(
+                for (string& curTopic : resolvedTopics){
+
+                    if (_topics.count(curTopic) == 0){
+                        if (topicAllowed(curTopic)){
+                            _topics.emplace(
+                                make_pair(curTopic, vector<shared_socket>())
+                            );
+                        } else {
+                            spdlog::get(_name)->info("Sending  Response: ERROR (SUBSCRIBE " + curTopic + ": This Topic does not exist!)");
+
+                            sendResponse(
+                            socket, 
+                            curTopic, 
+                            protobuf::Response::ERROR,
+                            "SUBSCRIBE " + curTopic + ": This Topic does not exist!"
+                            );
+                            continue;
+                        }
+                    }
+
+                    _topics.at(curTopic).push_back(socket);
+
+                    spdlog::get(_name)->info("Sending  Response: OK (SUBSCRIBE " + curTopic + ")");
+
+                    sendResponse(
                         socket, 
                         topic, 
-                        protobuf::Response::ERROR,
-                        "SUBSCRIBE " + topic + " This Topic is not allowed!"
-                        );
-                        continue;
-                    }
+                        protobuf::Response::OK,
+                        "SUBSCRIBE " + curTopic
+                    );
                 }
-
-                _topics.at(topic).push_back(socket);
 
                 lck.unlock();
 
-                spdlog::get(_name)->info("Sending  Response: OK (SUBSCRIBE " + topic + ")");
-
-                sendResponse(
-                    socket, 
-                    topic, 
-                    protobuf::Response::OK,
-                    "SUBSCRIBE " + topic
-                );
-            
             // UNSUBSCRIBE
             } else if (type == protobuf::Request::UNSUBSCRIBE) {
                 
@@ -181,28 +326,33 @@ void Broker::serveClient(shared_socket socket){
 
                 unique_lock lck{_topics_locker};
 
-                if (_topics.count(topic) != 0){
+                vector<string> resolvedTopics = resolveWildcards(topic);
 
-                    auto it = _topics.at(topic).begin();
+                for (string& curTopic: resolvedTopics){
 
-                    while (it != _topics.at(topic).end()){
+                    if (_topics.count(curTopic) != 0){
 
-                        if (it->get() == socket.get()){
-                            it = _topics.at(topic).erase(it);
+                        auto it = _topics.at(curTopic).begin();
+
+                        while (it != _topics.at(curTopic).end()){
+
+                            if (it->get() == socket.get()){
+                                it = _topics.at(curTopic).erase(it);
+                            }
                         }
                     }
+
+                    spdlog::get(_name)->info("Sending  Response: OK (UNSUBSCRIBE " + curTopic + ")");
+
+                    sendResponse(
+                        socket, 
+                        curTopic, 
+                        protobuf::Response::OK,
+                        "UNSUBSCRIBE " + topic
+                    );          
                 }
 
                 lck.unlock();
-
-                spdlog::get(_name)->info("Sending  Response: OK (UNSUBSCRIBE " + topic + ")");
-
-                sendResponse(
-                    socket, 
-                    topic, 
-                    protobuf::Response::OK,
-                    "UNSUBSCRIBE " + topic
-                );
             
             // PUBLISH
             } else if (type == protobuf::Request::PUBLISH) {
@@ -217,7 +367,7 @@ void Broker::serveClient(shared_socket socket){
                         spdlog::get(_name + " File Logger")->info("[" + topic + "] " + request.body());
                         spdlog::get(_name + " File Logger")->flush();
                     }
-
+                    
                     for (shared_socket& sock : _topics.at(topic)){
 
                         if (sock.get() != socket.get()){
@@ -241,27 +391,8 @@ void Broker::serveClient(shared_socket socket){
                     protobuf::Response::OK,
                     "PUBLISH " + topic
                 );
-
-            } else {
-                spdlog::get(_name)->error("Invalid Request Type!");
-
-                sendResponse(
-                    socket, 
-                    "", 
-                    protobuf::Response::ERROR,
-                    "Invalid Request Type!"
-                );
             }
-        } else {
-            spdlog::get(_name)->error("Invalid Request!");
-
-            sendResponse(
-                socket, 
-                "", 
-                protobuf::Response::ERROR,
-                "Invalid Request!"
-            );
-        }    
+        }   
     }
 }
 
@@ -284,11 +415,14 @@ int main(int argc, char* argv[]){
 
     // Logger
     auto logger      = spdlog::stdout_color_mt(name);
+    spdlog::set_level(spdlog::level::debug);    // TODO
+
     if (save != ""){
         try {  
             auto file_logger = spdlog::basic_logger_mt(name + " File Logger", save);
         } catch (const spdlog::spdlog_ex &ex) {
             logger->error("Could not generate or find the Save File!");
+            return 1;
         }
     }
 

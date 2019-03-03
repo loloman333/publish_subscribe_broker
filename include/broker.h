@@ -7,6 +7,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <regex>
 
 // JSON
 #include "json.hpp"
@@ -52,8 +53,9 @@ private:
     std::vector<std::string> _topics_s;
     std::string               _save;
 
-    bool isValid(protobuf::Request&);
+    bool isValid(protobuf::Request&, shared_socket&);
     bool topicAllowed(std::string);
+    std::vector<std::string> resolveWildcards(std::string);
 
     protobuf::Request receiveRequest(shared_socket);
     void sendResponse(shared_socket, std::string, protobuf::Response_ResponseType, std::string);

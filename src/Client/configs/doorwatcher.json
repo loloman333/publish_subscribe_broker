@@ -4,16 +4,12 @@
         {   
             "delay_after": 60000,
             "commands": [
-                { "type": "SUBSCRIBE", "topic": "Frontdoor"  },
-                { "type": "SUBSCRIBE", "topic": "Backdoor"   },
-                { "type": "SUBSCRIBE", "topic": "Secret Door"}
+                { "type": "SUBSCRIBE", "topic": "+/doors/#"}
             ]
         },
         {
             "commands": [
-                { "type": "UNSUBSCRIBE", "topic": "Frontdoor"  },
-                { "type": "UNSUBSCRIBE", "topic": "Backdoor"   },
-                { "type": "UNSUBSCRIBE", "topic": "Secret Door"}
+                { "type": "UNSUBSCRIBE", "topic": "+/doors/#"}
             ]
         }
     ]

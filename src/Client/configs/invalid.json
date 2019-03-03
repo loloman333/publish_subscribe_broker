@@ -1,0 +1,12 @@
+{
+    "actions": [
+        {
+            "repeat": 1,
+            "commands": [
+                { "type": "DOSMTH",   "topic": "" },
+                { "type": "PUBLISH",     "topic": "", 
+                  "content": "Will this be published?"}
+            ]
+        }
+    ]
+}

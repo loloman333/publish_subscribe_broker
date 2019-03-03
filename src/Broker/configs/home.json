@@ -1,23 +1,23 @@
 [
-    "/house/kitchen/lights/main",
-    "/house/kitchen/ligths/counter",
-    "/house/bedroom/devices/toaster",
-    "/house/kitchen/temperature",
+    "house/kitchen/lights/main",
+    "house/kitchen/ligths/counter",
+    "house/bedroom/devices/toaster",
+    "house/kitchen/temperature",
 
-    "/house/bedroom/lights/main",
-    "/house/bedroom/lights/bed",
-    "/house/bedroom/devices/television",
-    "/house/bedroom/temperature",
+    "house/bedroom/lights/main",
+    "house/bedroom/lights/bed",
+    "house/bedroom/devices/television",
+    "house/bedroom/temperature",
 
-    "/house/bathroom/lights/main",
-    "/house/bathroom/lights/shower",
-    "/house/bathroom/temperature",
+    "house/bathroom/lights/main",
+    "house/bathroom/lights/shower",
+    "house/bathroom/temperature",
 
-    "/house/doors/frontdoor",
-    "/house/doors/backdoor",
+    "house/doors/frontdoor",
+    "house/doors/backdoor",
 
-    "/garden/lights/main",
-    "/garden/lights/frontdoor",
-    "/garden/lights/gardendoor",
-    "/garden/doors/gardendoor"
+    "garden/lights/main",
+    "garden/lights/entrance",
+    "garden/lights/path",
+    "garden/doors/gardendoor"
 ]

@@ -1,23 +1,35 @@
-{   
+{
     "keep_alive": false,
     "actions": [
-        {   
-            "repeat": 5,
+        {
+            "repeat": 10,
             "delay_between": 3000,
             "commands": [
-                { "type": "PUBLISH", "topic": "Frontdoor", 
-                  "content": "Frontdoor just openend" },
-                { "type": "PUBLISH", "topic": "Frontdoor", 
-                    "content": "Frontdoor closed" }
+                {
+                    "type": "PUBLISH",
+                    "topic": "house/doors/frontdoor",
+                    "content": "Frontdoor just openend"
+                },
+                {
+                    "type": "PUBLISH",
+                    "topic": "house/doors/frontdoor",
+                    "content": "Frontdoor closed"
+                }
             ]
-        }, 
+        },
         {
             "delay_between": 5000,
             "commands": [
-                { "type": "PUBLISH", "topic": "Frontdoor", 
-                    "content": "Frontdoor was locked" },
-                { "type": "PUBLISH", "topic": "Frontdoor", 
-                  "content": "Frontdoor was blown up..." }
+                {
+                    "type": "PUBLISH",
+                    "topic": "house/doors/frontdoor",
+                    "content": "Frontdoor was locked"
+                },
+                {
+                    "type": "PUBLISH",
+                    "topic": "house/doors/frontdoor",
+                    "content": "Frontdoor was blown up..."
+                }
             ]
         }
     ]
