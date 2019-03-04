@@ -229,8 +229,6 @@ vector<string> Broker::resolveWildcards(string topicWildcard){
 
     if (topicWildcard.find("+") != string::npos || topicWildcard.find("#") != string::npos){
 
-        spdlog::get(_name)->info("Request Topic contains wildcards and includes the following Topics: ");
-
         while (topicWildcard.find("+") != string::npos){
             topicWildcard.replace(
                 topicWildcard.find("+"), 
@@ -251,11 +249,18 @@ vector<string> Broker::resolveWildcards(string topicWildcard){
 
         for (auto& pair : _topics){
             if (regex_match(pair.first, rgx)){
-                spdlog::get(_name)->info(pair.first);
                 resolved.push_back(pair.first);
             }
         }
 
+        if (resolved.size() == 0){
+            spdlog::get(_name)->info("Request Topic contains Wildcards but there are no matching Topics!");
+        } else {
+            spdlog::get(_name)->info("Request Topic contains Wildcards and includes the following Topics: ");
+            for (string& s : resolved){
+                spdlog::get(_name)->info(s);
+            }
+        }
     } else {
         resolved.push_back(topicWildcard);
     }
@@ -284,6 +289,17 @@ void Broker::serveClient(shared_socket socket){
                 unique_lock lck{_topics_locker};
 
                 vector<string> resolvedTopics = resolveWildcards(topic);
+
+                if (resolvedTopics.size() == 0){
+                    spdlog::get(_name)->info("Sending  Response: ERROR (SUBSCRIBE " + topic + ": No matching Topics exist!)");
+                    sendResponse(
+                        socket, 
+                        topic, 
+                        protobuf::Response::ERROR,
+                        "SUBSCRIBE " + topic + ": No matching Topics exist!"
+                    );
+                    continue;
+                }
 
                 for (string& curTopic : resolvedTopics){
 
@@ -327,6 +343,17 @@ void Broker::serveClient(shared_socket socket){
                 unique_lock lck{_topics_locker};
 
                 vector<string> resolvedTopics = resolveWildcards(topic);
+
+                if (resolvedTopics.size() == 0){
+                    spdlog::get(_name)->info("Sending  Response: ERROR (SUBSCRIBE " + topic + ": No matching Topics exist!)");
+                    sendResponse(
+                        socket, 
+                        topic, 
+                        protobuf::Response::ERROR,
+                        "SUBSCRIBE " + topic + ": No matching Topics exist!"
+                    );
+                    continue;
+                }
 
                 for (string& curTopic: resolvedTopics){
 
