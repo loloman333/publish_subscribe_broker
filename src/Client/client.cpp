@@ -16,7 +16,7 @@ void Client::sendRequest(protobuf::Request& request){
     string s;
     request.SerializeToString(&s);
 
-    asio::write(_socket, asio::buffer(s + "ENDOFMESSAGE"));
+    asio::write(_socket, asio::buffer(s + "ENDOFMESSAGE"));    
 
     this_thread::sleep_for(chrono::milliseconds(1)); // ???
 }
@@ -39,9 +39,20 @@ protobuf::Response Client::receiveResponse(){
 
 void Client::handleResponses(){
     while (true){
-        protobuf::Response response{
-            receiveResponse()
-        };
+
+        try {
+            protobuf::Response response{
+                receiveResponse()
+            };
+        } catch (std::system_error& e) {
+            if (e.code().value() == 2){
+                spdlog::get(_name)->info("The Connection to the Server was broken!");
+                break;
+            } else {
+                spdlog::get(_name)->error("An Error occured while reading from a Socket!");
+                throw e;
+            }
+        }
 
         if (response.type() == protobuf::Response::OK){
             spdlog::get(_name)->info("Received Response: OK (" + response.body() + ")");
@@ -120,9 +131,20 @@ void Client::start(){
 
         keepAlive = json_file.value("keep_alive", true);
 
-        for (json& action : json_file.at("actions")){
-            executeJSON(action);
+        try{       
+            for (json& action : json_file.at("actions")){
+                executeJSON(action);
+            }
+        } catch (std::system_error& e) {
+            if (e.code().value() == 32){
+                spdlog::get(_name)->error("The Connection to the Server was broken!");
+                return;
+            } else {
+                spdlog::get(_name)->error("An Error occured while reading from a Socket!");
+                throw e;
+            }
         }
+
             
     } catch (json::parse_error& e){
         spdlog::get(_name)->error("Could not find or parse the JSON Configuration File!");
