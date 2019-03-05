@@ -56,6 +56,7 @@ private:
     bool isValid(protobuf::Request&, shared_socket&);
     bool topicAllowed(std::string);
     std::vector<std::string> resolveWildcards(std::string);
+    void removeFromAllTopics(shared_socket);
 
     protobuf::Request receiveRequest(shared_socket);
     void sendResponse(shared_socket, std::string, protobuf::Response_ResponseType, std::string);

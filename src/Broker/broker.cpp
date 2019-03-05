@@ -219,7 +219,15 @@ void Broker::sendResponse(
     string s;
     response.SerializeToString(&s);
 
-    asio::write(*socket, asio::buffer(s + "ENDOFMESSAGE"));
+    try{
+        asio::write(*socket, asio::buffer(s + "ENDOFMESSAGE"));
+    } catch (std::system_error& e) {
+        if (e.code().value() != 32){
+            spdlog::get(_name)->warn("An Error occured while reading from a Socket!");
+            throw e;
+        }
+    }
+
 
     this_thread::sleep_for(chrono::milliseconds(1)); // ???
 }
@@ -268,13 +276,45 @@ vector<string> Broker::resolveWildcards(string topicWildcard){
     return resolved;
 }
 
+void Broker::removeFromAllTopics(shared_socket socket){
+    unique_lock lck{_topics_locker};
+
+    for (auto& topicPair : _topics){
+
+        if (_topics.count(topicPair.first) != 0){
+
+            auto it = _topics.at(topicPair.first).begin();
+
+            while (it != _topics.at(topicPair.first).end()){
+
+                if (it->get() == socket.get()){
+                    it = _topics.at(topicPair.first).erase(it);
+                } else {
+                     it = it + 1;
+                }
+            }
+        }
+    }
+}
+
 void Broker::serveClient(shared_socket socket){
 
     while (true){
 
-        protobuf::Request request{ 
-            receiveRequest(socket)
-        };
+        protobuf::Request request;
+
+        try {
+            request = receiveRequest(socket);
+        } catch (std::system_error& e) {
+            if (e.code().value() == 2){
+                spdlog::get(_name)->info("A Client disconnected");
+                removeFromAllTopics(socket);
+                break;
+            } else {
+                spdlog::get(_name)->error("An Error occured while reading from a Socket!");
+                throw e;
+            }
+        }
 
         if (isValid(ref(request), ref(socket))){
 
@@ -365,6 +405,8 @@ void Broker::serveClient(shared_socket socket){
 
                             if (it->get() == socket.get()){
                                 it = _topics.at(curTopic).erase(it);
+                            } else {
+                                it = it + 1;
                             }
                         }
                     }
@@ -441,8 +483,8 @@ int main(int argc, char* argv[]){
     CLI11_PARSE(app, argc, argv);
 
     // Logger
-    auto logger      = spdlog::stdout_color_mt(name);
-    spdlog::set_level(spdlog::level::debug);    // TODO
+    auto logger = spdlog::stdout_color_mt(name);
+    logger->set_level(spdlog::level::debug);
 
     if (save != ""){
         try {  
