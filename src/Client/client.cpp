@@ -40,14 +40,14 @@ protobuf::Response Client::receiveResponse(){
 void Client::handleResponses(){
     while (true){
 
+        protobuf::Response response;
+
         try {
-            protobuf::Response response{
-                receiveResponse()
-            };
+            response = receiveResponse();
         } catch (std::system_error& e) {
             if (e.code().value() == 2){
-                spdlog::get(_name)->info("The Connection to the Server was broken!");
-                break;
+                spdlog::get(_name)->error("The Connection to the Server was broken!");
+                quick_exit(EXIT_SUCCESS);
             } else {
                 spdlog::get(_name)->error("An Error occured while reading from a Socket!");
                 throw e;
@@ -115,8 +115,18 @@ void Client::start(){
 
     tcp::resolver resolver{_ctx};                    // Resolver
 
-    auto results = resolver.resolve(_hostname, to_string(_port));  
-    asio::connect(_socket, results);  
+    try {
+        auto results = resolver.resolve(_hostname, to_string(_port));  
+        asio::connect(_socket, results);  
+    } catch (system_error& e){
+        if (e.code().value() == 111){
+            spdlog::get(_name)->error("Could not connect to the Server!");
+            return;
+        } else {
+            spdlog::get(_name)->error("An Error occured while trying to connect to the Server!");
+            throw e;
+        }
+    } 
 
     spdlog::get(_name)->info("Connected to Server at " + _hostname + ":" + to_string(_port));
 
@@ -138,7 +148,7 @@ void Client::start(){
         } catch (std::system_error& e) {
             if (e.code().value() == 32){
                 spdlog::get(_name)->error("The Connection to the Server was broken!");
-                return;
+                quick_exit(EXIT_SUCCESS);
             } else {
                 spdlog::get(_name)->error("An Error occured while reading from a Socket!");
                 throw e;
