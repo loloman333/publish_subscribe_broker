@@ -1,6 +1,22 @@
+/* 
+  ____ _ _            _       _     
+ / ___| (_) ___ _ __ | |_    | |__  
+| |   | | |/ _ \ '_ \| __|   | '_ \ 
+| |___| | |  __/ | | | |_ _  | | | |
+ \____|_|_|\___|_| |_|\__(_) |_| |_|
+
+Author: Killer Lorenz
+Class : 5BHIF
+Date  : 07-03-2019
+File  : client.h
+
+*/
+
 #pragma once
 
-// --------------------------- Includes --------------------------------------------------------
+// +--------------------------+
+// | Includes                 |
+// +--------------------------+
 
 #include <iostream>
 #include <fstream>
@@ -28,7 +44,10 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #pragma GCC diagnostic pop
 
-// -------------------------- Class -----------------------------------------------------------
+// +--------------------------+
+// | Class Declaration        |
+// +--------------------------+
+
 class Client{
 public:
     Client(std::string, short unsigned int, std::string, std::string);
@@ -49,5 +68,4 @@ private:
     protobuf::Response receiveResponse();
 
     void executeJSON(nlohmann::json&);
-
 };

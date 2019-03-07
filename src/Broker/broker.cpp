@@ -1,9 +1,49 @@
+/* 
+ ____            _                                
+| __ ) _ __ ___ | | _____ _ __    ___ _ __  _ __  
+|  _ \| '__/ _ \| |/ / _ \ '__|  / __| '_ \| '_ \ 
+| |_) | | | (_) |   <  __/ | _  | (__| |_) | |_) |
+|____/|_|  \___/|_|\_\___|_|(_)  \___| .__/| .__/ 
+                                     |_|   |_|    
+
+Author: Killer Lorenz
+Class : 5BHIF
+Date  : 07-03-2019
+
+*/
+
 #include "broker.h"
 
 using namespace std;
 using namespace asio::ip;
 using json = nlohmann::json;
 
+// +--------------------------+
+// | Helper Functions         |
+// +--------------------------+
+
+vector<string> splitString(string s, string delim){
+    auto start = 0U;
+    auto end = s.find(delim);
+
+    vector<string> tokens;
+
+    while (end != string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delim.length();
+        end = s.find(delim, start);
+        
+    }
+    tokens.push_back(s.substr(start, end));
+
+    return tokens;
+}
+
+// +--------------------------+
+// | Class Definition         |
+// +--------------------------+
+
+// Constructor
 Broker::Broker(short unsigned int port, string name, string config, string save) : 
     _port{port}, 
     _name{name},
@@ -11,6 +51,7 @@ Broker::Broker(short unsigned int port, string name, string config, string save)
     _save{save}
 {}
 
+// Reads the Config File and starts listening on the Port
 void Broker::start(){
     
     // Read JSON Config File (if stated)
@@ -76,23 +117,7 @@ void Broker::start(){
     acceptor.close();
 }
 
-vector<string> splitString(string s, string delim){
-    auto start = 0U;
-    auto end = s.find(delim);
-
-    vector<string> tokens;
-
-    while (end != string::npos) {
-        tokens.push_back(s.substr(start, end - start));
-        start = end + delim.length();
-        end = s.find(delim, start);
-        
-    }
-    tokens.push_back(s.substr(start, end));
-
-    return tokens;
-}
-
+// Checks if a Protobuf Request is valid for a specific Client
 bool Broker::isValid(protobuf::Request& request, shared_socket& socket){
 
     // Empty Topic ?
@@ -174,6 +199,7 @@ bool Broker::isValid(protobuf::Request& request, shared_socket& socket){
     return true;
 }
 
+// Checls if a Topic is allowed with the current config
 bool Broker::topicAllowed(string topic){
     if (_config == ""){
         return true;
@@ -188,6 +214,7 @@ bool Broker::topicAllowed(string topic){
     return false;
 }
 
+// Receives a Protobuf Request from a specific Client
 protobuf::Request Broker::receiveRequest(shared_socket socket){
     // Read Data from Socket & write it into String 
     asio::streambuf b;
@@ -204,6 +231,7 @@ protobuf::Request Broker::receiveRequest(shared_socket socket){
     return request;
 }
 
+// Sends a Protobuf Response to a specific Client
 void Broker::sendResponse(
     shared_socket socket, 
     string topic, 
@@ -232,6 +260,7 @@ void Broker::sendResponse(
     this_thread::sleep_for(chrono::milliseconds(1)); // ???
 }
 
+// Resolves a Topic string with Wildcards into a Vector of Topics
 vector<string> Broker::resolveWildcards(string topicWildcard){
     vector<string> resolved;
 
@@ -276,6 +305,7 @@ vector<string> Broker::resolveWildcards(string topicWildcard){
     return resolved;
 }
 
+// Removes a specific Client from all Topics
 void Broker::removeFromAllTopics(shared_socket socket){
     unique_lock lck{_topics_locker};
 
@@ -297,6 +327,7 @@ void Broker::removeFromAllTopics(shared_socket socket){
     }
 }
 
+// Constantly reads and executes Requests for a specific Client
 void Broker::serveClient(shared_socket socket){
 
     while (true){
@@ -464,6 +495,10 @@ void Broker::serveClient(shared_socket socket){
         }   
     }
 }
+
+// +--------------------------+
+// | Main                     |
+// +--------------------------+
 
 int main(int argc, char* argv[]){
 

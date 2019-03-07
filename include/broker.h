@@ -1,6 +1,21 @@
+/*
+ ____            _               _     
+| __ ) _ __ ___ | | _____ _ __  | |__  
+|  _ \| '__/ _ \| |/ / _ \ '__| | '_ \ 
+| |_) | | | (_) |   <  __/ | _  | | | |
+|____/|_|  \___/|_|\_\___|_|(_) |_| |_|
+
+Author: Killer Lorenz
+Class : 5BHIF
+Date  : 07-03-2019
+
+*/
+
 #pragma once
 
-// --------------------------- Includes --------------------------------------------------------
+// +--------------------------+
+// | Includes                 |
+// +--------------------------+
 
 #include <iostream>
 #include <map>
@@ -33,12 +48,16 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #pragma GCC diagnostic pop
 
-// ------------------------------------------ Type Definitions ---------------------------------
+// +--------------------------+
+// | Type Definitions         |
+// +--------------------------+
 
-typedef std::shared_ptr<asio::ip::tcp::socket>                             shared_socket;
-typedef std::map<std::string, std::vector<shared_socket>>                  shared_socket_map;
+typedef std::shared_ptr<asio::ip::tcp::socket>             shared_socket;
+typedef std::map<std::string, std::vector<shared_socket>>  shared_socket_map;
 
-// -------------------------- Class -----------------------------------------------------------
+// +--------------------------+
+// | Class Declaration        |
+// +--------------------------+
 class Broker{
 public:
     Broker(short unsigned int, std::string, std::string, std::string);
@@ -51,7 +70,7 @@ private:
     std::string              _name; 
     std::string              _config;
     std::vector<std::string> _topics_s;
-    std::string               _save;
+    std::string              _save;
 
     bool isValid(protobuf::Request&, shared_socket&);
     bool topicAllowed(std::string);

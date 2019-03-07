@@ -1,9 +1,28 @@
+/* 
+  ____ _ _            _                        
+ / ___| (_) ___ _ __ | |_      ___ _ __  _ __  
+| |   | | |/ _ \ '_ \| __|    / __| '_ \| '_ \ 
+| |___| | |  __/ | | | |_ _  | (__| |_) | |_) |
+ \____|_|_|\___|_| |_|\__(_)  \___| .__/| .__/ 
+                                  |_|   |_|    
+
+Author: Killer Lorenz
+Class : 5BHIF
+Date  : 07-03-2019
+
+*/
+
 #include "client.h"
 
 using namespace std;
 using namespace asio::ip;
 using json = nlohmann::json;
 
+// +--------------------------+
+// | Class Definition         |
+// +--------------------------+
+
+// Constructor
 Client::Client(string hostname, short unsigned int port, string config, string name) :
     _hostname{hostname},
     _port{port},
@@ -12,6 +31,7 @@ Client::Client(string hostname, short unsigned int port, string config, string n
     _socket{_ctx}
 {}
 
+// Sends a Protobuf Request to the Server
 void Client::sendRequest(protobuf::Request& request){
     string s;
     request.SerializeToString(&s);
@@ -21,6 +41,7 @@ void Client::sendRequest(protobuf::Request& request){
     this_thread::sleep_for(chrono::milliseconds(1)); // ???
 }
 
+// Returns a Protobuf Response from the Server - Blocking !!!
 protobuf::Response Client::receiveResponse(){
     // Read Data from Socket & write it into String 
     asio::streambuf b;
@@ -37,6 +58,7 @@ protobuf::Response Client::receiveResponse(){
     return response;
 }
 
+// Constantly reads Responses from Server and logs them
 void Client::handleResponses(){
     while (true){
 
@@ -66,10 +88,11 @@ void Client::handleResponses(){
     }
 }
 
+// Executes one "Block" of JSON commands
 void Client::executeJSON(json& action){
 
     //Check > 0 (both)
-    int repeat        = action.value("repeat", 1);          // What if string? What if float?
+    int repeat        = action.value("repeat", 1);
     int delay_after   = action.value("delay_after",  0);
     int delay_between = action.value("delay_between",  0);
    
@@ -111,6 +134,7 @@ void Client::executeJSON(json& action){
     }
 }
 
+// Establishes Connection to Server and reads Config File
 void Client::start(){
 
     tcp::resolver resolver{_ctx};                    // Resolver
@@ -172,6 +196,10 @@ void Client::start(){
         t.detach();
     }
 }
+
+// +--------------------------+
+// | Main                     |
+// +--------------------------+
 
 int main(int argc, char* argv[]){
 
