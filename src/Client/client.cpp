@@ -211,10 +211,10 @@ int main(int argc, char* argv[]){
     string             configFile;
     string             name{"Client"};
 
-    app.add_option("-s, --server", hostname, "The Hostname the Client will connect to (Default:  'localhost')"); 
-    app.add_option("-p, --port",   port, "The Port the Client will connect to (Default:  6666)"); 
-    app.add_option("-c, --config", configFile, "The Path to the Config File")->required();
-    app.add_option("-n, --name",   name, "The Name of the Client (Default: 'Client')");
+    app.add_option("-s, --server", hostname,   "The Hostname the Client will connect to (Default:  'localhost')"); 
+    app.add_option("-p, --port"  , port,       "The Port the Client will connect to     (Default:  6666)"); 
+    app.add_option("-n, --name"  , name,       "The Name of the Client                  (Default: 'Client')");
+    app.add_option("-c, --config", configFile, "The Path to the Config File             (Required)")->required();
 
     CLI11_PARSE(app, argc, argv);
 

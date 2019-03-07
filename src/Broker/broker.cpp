@@ -510,10 +510,10 @@ int main(int argc, char* argv[]){
     string             config{""};
     string             save{""};
 
-    app.add_option("-p, --port",   port,   "The Port the Broker will listen on (Default:  6666)");
-    app.add_option("-n, --name",   name,   "The Name of the Broker (Default: 'Broker')");
-    app.add_option("-c, --config", config, "The Path to the JSON Config File (If this is not set topics will be created dynamically)");
-    app.add_option("-s, --save",   save,   "The Path to the File where the Messages will be logged to (If this is not set Messages won't be logged)");
+    app.add_option("-p, --port",   port,   "The Port the Broker will listen on      (Default:  6666)");
+    app.add_option("-n, --name",   name,   "The Name of the Broker                  (Default: 'Broker')");
+    app.add_option("-c, --config", config, "The Path to the JSON Configuration File (Default: None)");
+    app.add_option("-l, --log",    save,   "The Path to the Logfile                 (Default: None)");
 
     CLI11_PARSE(app, argc, argv);
 
