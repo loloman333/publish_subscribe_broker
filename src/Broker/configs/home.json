@@ -1,7 +1,7 @@
 [
     "house/kitchen/lights/main",
     "house/kitchen/ligths/counter",
-    "house/bedroom/devices/toaster",
+    "house/kitchen/devices/toaster",
     "house/kitchen/temperature",
 
     "house/bedroom/lights/main",

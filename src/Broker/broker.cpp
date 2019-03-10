@@ -519,7 +519,6 @@ int main(int argc, char* argv[]){
 
     // Logger
     auto logger = spdlog::stdout_color_mt(name);
-    logger->set_level(spdlog::level::debug);
 
     if (save != ""){
         try {  
